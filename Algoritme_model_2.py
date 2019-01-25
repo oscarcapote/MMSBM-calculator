@@ -1,6 +1,6 @@
 # coding: utf-8
 
-# In[106]: 
+# In[106]:
 
 
 import pandas as pd
@@ -368,11 +368,20 @@ def theta_comp_arrays(omega,theta,K,veins_nodes_array,N_veins_nodes):
 # In[5]:
 
 
-@print_n_func
+#@print_n_func
 #@timer
-@jit(locals=dict(i=int64,j=int64,k=int64,l=int64,suma=double,new_theta=double[:,:]),parallel=True)
-def theta_comp_arrays_exclusive(omega,theta,K,links_array,N_veins_nodes):
+#@jit(locals=dict(i=int64,j=int64,k=int64,l=int64,suma=double,new_theta=double[:,:]),parallel=True)
+def theta_comp_arrays_exclusive(omega,theta,K,links_array,N_veins_metas_nodes,veins_metas_nodes,N_att,N_veins_nodes):
     new_theta = np.zeros((N_nodes,K))
+    if lambda_nodes==0:
+        means = np.zeros((K,N_att))
+        for att in range(N_att):
+            c = 0.0
+            for k in range(K):
+                means[k,att] = np.sum(theta[veins_metas_nodes[att],k])/len(veins_metas_nodes[att])
+                c += means[k,att]
+            means[:,att] /= c
+        print(means.sum(axis=0))
     for link  in prange(len(links_array)):
         i = links_array[link][0]
         a = links_array[link][1]
@@ -769,7 +778,7 @@ for itt in range(N_itt):
     #print('theta_0',any_nan(theta))
     theta = theta_comp_arrays(omega,theta,K,veins_nodes_array,N_veins_nodes)
     for meta in range(len(N_att_meta_items)):
-        theta = sum_matrix_lambda(theta,theta_comp_arrays_exclusive(omega_nodes[meta],theta,K,metas_links_arrays_nodes[meta],N_veins_nodes),lambda_nodes)
+        theta = sum_matrix_lambda(theta,theta_comp_arrays_exclusive(omega_nodes[meta],theta,K,metas_links_arrays_nodes[meta],N_veins_metas_nodes[meta],veins_metas_nodes[meta],N_att_meta_nodes[meta],N_veins_nodes),lambda_nodes)
         q_kas[meta] = q_ka_comp_arrays(omega_nodes[meta],q_kas[meta],K,metas_links_arrays_nodes[meta],N_veins_metas_nodes[meta])
         omega_nodes[meta] = omega_comp_arrays_exclusive(omega_nodes[meta],q_kas[meta],theta,K,metas_links_arrays_nodes[meta])
     '''if itt>-1:
