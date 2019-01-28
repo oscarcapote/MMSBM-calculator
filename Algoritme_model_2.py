@@ -228,6 +228,7 @@ def obtain_meta_arrays(meta_list,id_header):
     N_att_meta = []
     metas_links_arrays = []
     veins_metas = []
+    veins_nodes = []
     N_veins_metas = []
 
     if meta_list==None:
@@ -241,11 +242,15 @@ def obtain_meta_arrays(meta_list,id_header):
         metas_links_arrays.append(df_nodes[[id_header,meta]][df_nodes[meta].notnull()].astype(int).values)
         veins_metas.append([df_nodes[id_header][df_nodes[meta]==int(att)].values for att in range(N_att_meta[-1])])
         N_veins_metas.append([float(len(arr)) for arr in veins_metas[-1]])
+        veins_nodes.append(np.ones(len(df_nodes),dtype=np.int32))
+        for n,att in metas_links_arrays[-1]:
+        #    for i in:
+            veins_nodes[-1][n] = att
 
-    return Att_meta,N_att_meta,metas_links_arrays,veins_metas,N_veins_metas
+    return Att_meta,N_att_meta,metas_links_arrays,veins_metas,veins_nodes,N_veins_metas
 
-Att_meta_nodes,N_att_meta_nodes,metas_links_arrays_nodes,veins_metas_nodes,N_veins_metas_nodes = obtain_meta_arrays(node_meta_data,node_header)
-#Att_meta_items,N_att_meta_items,metas_links_arrays_items,veins_metas_items,N_veins_metas_items = obtain_meta_arrays(items_meta_data,'movieId')
+Att_meta_nodes,N_att_meta_nodes,metas_links_arrays_nodes,veins_metas_nodes,veins_nodes_metas,N_veins_metas_nodes = obtain_meta_arrays(node_meta_data,node_header)
+
 
 veins_items_metas = []
 veins_metas_items = []
