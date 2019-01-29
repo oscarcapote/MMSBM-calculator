@@ -376,7 +376,7 @@ def theta_comp_arrays(omega,theta,K,veins_nodes_array,N_veins_nodes):
 #@print_n_func
 #@timer
 #@jit(locals=dict(i=int64,j=int64,k=int64,l=int64,suma=double,new_theta=double[:,:]),parallel=True)
-def theta_comp_arrays_exclusive(omega,theta,K,links_array,N_veins_metas_nodes,veins_metas_nodes,N_att,N_veins_nodes):
+def theta_comp_arrays_exclusive(omega,theta,K,links_array,N_veins_metas_nodes,veins_metas_nodes,veins_nodes_metas,N_att,N_veins_nodes):
     new_theta = np.zeros((N_nodes,K))
     if lambda_nodes==0:
         means = np.zeros((K,N_att))
@@ -390,6 +390,7 @@ def theta_comp_arrays_exclusive(omega,theta,K,links_array,N_veins_metas_nodes,ve
     for link  in prange(len(links_array)):
         i = links_array[link][0]
         a = links_array[link][1]
+        if lambda_nodes==0 and :
         for k in prange(K):
             new_theta[i,k] = omega[i,k]
         new_theta[i,:] /= N_veins_nodes[i]
@@ -696,7 +697,9 @@ N_ratings,links_array,links_ratings,links_by_ratings_array,veins_nodes_array,vei
 simu_dir_lam = 'simu_ln_{}_li_{}'.format(lambda_nodes,lambda_items)
 
 if not os.path.exists(simu_dir_lam):
-    os.makedirs(simu_dir_lam)
+    try:
+        os.makedirs(simu_dir_lam)
+    except: pass
 
 # In[ ]:
 
