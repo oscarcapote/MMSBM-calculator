@@ -376,7 +376,7 @@ def theta_comp_arrays(omega,theta,K,veins_nodes_array,N_veins_nodes):
 #@print_n_func
 #@timer
 #@jit(locals=dict(i=int64,j=int64,k=int64,l=int64,suma=double,new_theta=double[:,:]),parallel=True)
-def theta_comp_arrays_exclusive(omega,theta,K,links_array,N_veins_metas_nodes,veins_metas_nodes,veins_nodes_metas,N_att,N_veins_nodes):
+def theta_comp_arrays_exclusive(omega,theta,K,links_array,veins_nodes_array,N_veins_metas_nodes,veins_metas_nodes,veins_nodes_metas,N_att,N_veins_nodes):
     new_theta = np.zeros((N_nodes,K))
     if lambda_nodes==0:
         means = np.zeros((K,N_att))
@@ -386,11 +386,14 @@ def theta_comp_arrays_exclusive(omega,theta,K,links_array,N_veins_metas_nodes,ve
                 means[k,att] = np.sum(theta[veins_metas_nodes[att],k])/len(veins_metas_nodes[att])
                 c += means[k,att]
             means[:,att] /= c
-        print(means.sum(axis=0))
+            print(theta[veins_metas_nodes[att],:])
+        print('-------',K,means.sum(axis=0))
     for link  in prange(len(links_array)):
         i = links_array[link][0]
         a = links_array[link][1]
-        if lambda_nodes==0 and :
+        if lambda_nodes==0 and veins_nodes_array[i]==[]:
+            new_theta[i,:] = means[:,a]
+            continue
         for k in prange(K):
             new_theta[i,k] = omega[i,k]
         new_theta[i,:] /= N_veins_nodes[i]
@@ -786,7 +789,8 @@ for itt in range(N_itt):
     #print('theta_0',any_nan(theta))
     theta = theta_comp_arrays(omega,theta,K,veins_nodes_array,N_veins_nodes)
     for meta in range(len(N_att_meta_items)):
-        theta = sum_matrix_lambda(theta,theta_comp_arrays_exclusive(omega_nodes[meta],theta,K,metas_links_arrays_nodes[meta],N_veins_metas_nodes[meta],veins_metas_nodes[meta],N_att_meta_nodes[meta],N_veins_nodes),lambda_nodes)
+        #omega,theta,K,links_array,veins_nodes_array,N_veins_metas_nodes,veins_nodes,veins_metas_nodes,veins_nodes_metas,N_att,N_veins_nodes
+        theta = sum_matrix_lambda(theta,theta_comp_arrays_exclusive(omega_nodes[meta],theta,K,metas_links_arrays_nodes[meta],veins_nodes_array,N_veins_metas_nodes[meta],veins_metas_nodes[meta],veins_nodes_metas[meta],N_att_meta_nodes[meta],N_veins_nodes),lambda_nodes)
         q_kas[meta] = q_ka_comp_arrays(omega_nodes[meta],q_kas[meta],K,metas_links_arrays_nodes[meta],N_veins_metas_nodes[meta])
         omega_nodes[meta] = omega_comp_arrays_exclusive(omega_nodes[meta],q_kas[meta],theta,K,metas_links_arrays_nodes[meta])
     '''if itt>-1:
