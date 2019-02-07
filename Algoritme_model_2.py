@@ -219,7 +219,10 @@ N_ratings,links_array,links_ratings,links_by_ratings_array,veins_nodes_array,vei
 
 
 # In[105]:
-
+#@vectorize([float64(float64, float64, float64)])
+@jit
+def any_nan(M):
+    return np.any(np.isnan(M))
 
 
 def obtain_meta_arrays(meta_list,id_header):
@@ -366,11 +369,50 @@ def theta_comp_arrays(omega,theta,K,veins_nodes_array,N_veins_nodes):
             new_theta[i,k] /= N_veins_nodes[i]
     return new_theta
 
+#@print_n_func
+#@timer
+#@jit(locals=dict(i=int64,j=int64,k=int64,l=int64,suma=double,new_theta=double[:,:]),parallel=True)
+def theta_comp_arrays_2(omega_metas,omega,theta,K,veins_nodes_array,N_veins_nodes,veins_metas_nodes,N_att_meta_nodes):
+    new_theta = np.zeros((N_nodes,K))
+    N_metas = len(N_att_meta_nodes)
+    if lambda_nodes==0:
+        means = []
+        for meta,N_att in enumerate(N_att_meta_nodes):
+            means.append(np.zeros((K,N_att)))
+            for att in range(N_att):
+                c = 0.0
+                for k in range(K):
+                    means[-1][k,att] = np.sum(theta[veins_metas_nodes[meta][att],k])/len(veins_metas_nodes[meta][att])
+                    c += means[-1][k,att]
+                means[-1][:,att] /= c
 
-# In[148]:
+    for i in prange(N_nodes):
+        #att_node = veins_nodes_metas[i]
+        veins_node = veins_nodes_array[i]
+        if veins_node==[]:
+            if lambda_nodes==0:
+                for meta in range(N_metas):
+                    a = veins_nodes_metas[meta][i]
+                    new_theta[i,:] = means[meta][:,a]
+                new_theta[i,:] = new_theta[i,:]/np.sum(new_theta[i,:])
+                #print('aillat',i,new_theta[i,:])
+                continue
+            #for k in prange(K):
+            for meta in range(N_metas):
+                new_theta[i,:] += omega_metas[meta][i,:]
+            new_theta[i,:] *= lambda_nodes/N_veins_nodes[i]
+        else:
+            for k in prange(K):
+                #theta_ik = theta[i,k]
+                new_theta[i,k] = np.sum(omega[i,veins_node,k,:])
+                for meta in range(N_metas):
+                    new_theta[i,k] += lambda_nodes*omega_metas[meta][i,k]
+                new_theta[i,:] /= N_veins_nodes[i]
+        #if any_nan(new_theta[i,:]):
+        #    print('no aillat',i,omega[i,k])
+    #if any_nan(new_theta):exit()
+    return new_theta
 
-
-# In[5]:
 
 
 #@print_n_func
@@ -386,18 +428,19 @@ def theta_comp_arrays_exclusive(omega,theta,K,links_array,veins_nodes_array,N_ve
                 means[k,att] = np.sum(theta[veins_metas_nodes[att],k])/len(veins_metas_nodes[att])
                 c += means[k,att]
             means[:,att] /= c
-            print(theta[veins_metas_nodes[att],:])
-        print('-------',K,means.sum(axis=0))
     for link  in prange(len(links_array)):
         i = links_array[link][0]
         a = links_array[link][1]
         if lambda_nodes==0 and veins_nodes_array[i]==[]:
             new_theta[i,:] = means[:,a]
+            #print('aillat',i,new_theta[i,:])
             continue
         for k in prange(K):
             new_theta[i,k] = omega[i,k]
         new_theta[i,:] /= N_veins_nodes[i]
-            #print(omega[i,k],N_veins_nodes[i],omega[i,k]/N_veins_nodes[i],new_theta[i,k])
+        #if any_nan(new_theta[i,:]):
+        #    print('no aillat',i,omega[i,k])
+    #if any_nan(new_theta):exit()
     return new_theta
 
 
@@ -514,7 +557,7 @@ def omega_comp_arrays(omega,p_kl,eta,theta,K,L,links_array,links_ratings):
 
 @print_n_func
 #@timer
-@jit(nopython=True,locals=dict(i=int64,a=int64,k=int64,link=int64,suma=double),parallel=True)
+#@jit(nopython=True,locals=dict(i=int64,a=int64,k=int64,link=int64,suma=double),parallel=True)
 def omega_comp_arrays_exclusive(omega,q_ka,theta,K,links_array):
     for link  in prange(len(links_array)):
         i = links_array[link][0]
@@ -523,7 +566,9 @@ def omega_comp_arrays_exclusive(omega,q_ka,theta,K,links_array):
         for k in range(K):
             omega[i,k] = q_ka[k,a]*theta[i,k]
             suma += omega[i,k]
-        omega[i,:] /= suma
+        #if suma<1.0e-16:
+        #    print(i,veins_nodes_array[i])#,theta[i,:],q_ka[:,a])
+        omega[i,:] /= suma+1e-16
     return omega
 
 @print_n_func
@@ -652,6 +697,8 @@ def log_like_comp_arrays_exclusive(theta,q_ka,K,links_array):
         suma = 0
         for k in range(K):
             suma += theta[i,k]*q_ka[k,a]
+        #if suma<1.0e-16:
+        #    print(i,veins_nodes_array[i],theta[i,:],q_ka[:,a])
         log_like += np.log(suma)
     return log_like
 
@@ -793,6 +840,11 @@ for itt in range(N_itt):
         theta = sum_matrix_lambda(theta,theta_comp_arrays_exclusive(omega_nodes[meta],theta,K,metas_links_arrays_nodes[meta],veins_nodes_array,N_veins_metas_nodes[meta],veins_metas_nodes[meta],veins_nodes_metas[meta],N_att_meta_nodes[meta],N_veins_nodes),lambda_nodes)
         q_kas[meta] = q_ka_comp_arrays(omega_nodes[meta],q_kas[meta],K,metas_links_arrays_nodes[meta],N_veins_metas_nodes[meta])
         omega_nodes[meta] = omega_comp_arrays_exclusive(omega_nodes[meta],q_kas[meta],theta,K,metas_links_arrays_nodes[meta])
+
+    theta_2 = theta_comp_arrays_2(omega_nodes,omega,theta,K,veins_nodes_array,N_veins_nodes,veins_metas_nodes,N_att_meta_nodes)
+    for i in range(N_nodes):
+        print('thetes',i,theta[i,:],theta_2[i,:],theta_2[i,:].sum(),veins_nodes_array[i])
+        raw_input()
     '''if itt>-1:
         print(itt)
         #print(theta)
@@ -819,16 +871,17 @@ for itt in range(N_itt):
     if itt%N_measure==0:
         log_like = 0.0
         log_like += log_like_comp_arrays(p_kl,eta,theta,K,L,links_array,links_ratings)
-
+        print('1',log_like)
         for meta in range(len(N_att_meta_items)):
             log_like += lambda_nodes*log_like_comp_arrays_exclusive(theta,q_kas[meta],K,metas_links_arrays_nodes[meta])
-
+        print('2',log_like)
         for meta in range(len(Taus)):
             log_like += lambda_items*log_like_comp_arrays(q_l_taus[meta],zetes[meta],eta,L,Taus[meta],metas_links_arrays_items[meta],metas_links_arrays_items_type[meta])
-
+        print('3',log_like)
         variation = old_log_like-log_like
 
         file_logLike.write('{}\t{}\t{}\n'.format(itt,log_like,variation))
+        print('{}\t{}\t{}\n'.format(itt,log_like,variation))
 
         '''if finished(theta,eta,p_kl,theta_old,eta_old,p_kl_old,N_nodes,N_items,N_ratings,K,L,0.0001):
             if finished(zeta,eta,q_l_tau,zeta_old,eta_old,q_l_tau_old,N_genres,N_items,2,K,Tau,0.0001):
