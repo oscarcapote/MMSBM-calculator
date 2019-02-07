@@ -370,9 +370,9 @@ def theta_comp_arrays(omega,theta,K,veins_nodes_array,N_veins_nodes):
     return new_theta
 
 #@print_n_func
-@timer
-#@jit(locals=dict(i=int64,j=int64,k=int64,l=int64,suma=double,new_theta=double[:,:]),parallel=True)
-def theta_comp_arrays_multilayer(omega_metas,omega,theta,K,veins_nodes_array,N_veins_nodes,veins_metas_nodes,N_att_meta_nodes):
+#@timer
+@jit(locals=dict(i=int64,j=int64,k=int64,l=int64,suma=double,new_theta=double[:,:]),parallel=True)
+def theta_comp_arrays_multilayer_2(omega_metas,omega,theta,K,veins_nodes_array,N_veins_nodes,veins_metas_nodes,N_att_meta_nodes):
     new_theta = np.zeros((N_nodes,K))
     N_metas = len(N_att_meta_nodes)
     if lambda_nodes==0:
@@ -414,9 +414,9 @@ def theta_comp_arrays_multilayer(omega_metas,omega,theta,K,veins_nodes_array,N_v
     return new_theta
 
 #@print_n_func
-@timer
-#@jit(locals=dict(i=int64,j=int64,k=int64,l=int64,suma=double,new_theta=double[:,:]),parallel=True)
-def theta_comp_arrays_multilayer_2(omega_metas,omega,theta,K,veins_nodes_array,N_veins_nodes,veins_metas_nodes,N_att_meta_nodes):
+#@timer
+@jit(locals=dict(i=int64,j=int64,k=int64,l=int64,suma=double,new_theta=double[:,:]),parallel=True)
+def theta_comp_arrays_multilayer(omega_metas,omega,theta,K,veins_nodes_array,N_veins_nodes,veins_metas_nodes,N_att_meta_nodes):
     new_theta = np.zeros((N_nodes,K))
     N_metas = len(N_att_meta_nodes)
     if lambda_nodes==0:
@@ -489,13 +489,13 @@ def theta_comp_arrays_exclusive(omega,theta,K,links_array,veins_nodes_array,N_ve
 
 
 #@print_n_func
-@timer
-#@jit(parallel=True)
-def eta_multilayer_2(eta,omega,omega_items,veins_items_array,L,N_veins_items,lambda_items,veins_metas_items,N_att_meta_items):
+#@timer
+@jit(parallel=True)
+def eta_multilayer(eta,omega,omega_items,veins_items_array,L,N_veins_items,lambda_items,veins_metas_items,N_att_meta_items):
     new_eta = np.zeros((N_items,L))
     N_metas = len(N_att_meta_items)
+    means = []
     if lambda_items==0:
-        means = []
         for meta,N_att in enumerate(N_att_meta_items):
             means.append(np.zeros((L,N_att)))
             for att in range(N_att):
@@ -533,13 +533,13 @@ def eta_multilayer_2(eta,omega,omega_items,veins_items_array,L,N_veins_items,lam
 
 
 #@print_n_func
-@timer
-#@jit(parallel=True)
-def eta_multilayer(eta,omega,omega_items,veins_items_array,L,N_veins_items,lambda_items,veins_metas_items,N_att_meta_items):
+#@timer
+@jit(parallel=True)
+def eta_multilayer_2(eta,omega,omega_items,veins_items_array,L,N_veins_items,lambda_items,veins_metas_items,N_att_meta_items):
     new_eta = np.zeros((N_items,L))
     N_metas = len(N_att_meta_items)
+    means = []
     if lambda_items==0:
-        means = []
         for meta,N_att in enumerate(N_att_meta_items):
             means.append(np.zeros((L,N_att)))
             for att in range(N_att):
@@ -953,20 +953,9 @@ q_l_taus_old = deepcopy(q_l_taus)
 
 print('simu',N_itt,N_measure)
 for itt in range(N_itt):
-    #tik = time()
-    #print('omega',any_nan(omega))
-    #print('theta_0',any_nan(theta))
-    #theta = theta_comp_arrays(omega,theta,K,veins_nodes_array,N_veins_nodes)
-    theta2 = theta_comp_arrays_multilayer_2(omega_nodes,omega,theta,K,veins_nodes_array,N_veins_nodes,veins_metas_nodes,N_att_meta_nodes)
     theta = theta_comp_arrays_multilayer(omega_nodes,omega,theta,K,veins_nodes_array,N_veins_nodes,veins_metas_nodes,N_att_meta_nodes)
 
-    for i in range(N_nodes):
-        print(i,theta[i,:],theta[i,:].sum(),veins_nodes_array[i])
-        print(i,theta2[i,:],theta2[i,:].sum(),veins_nodes_array[i])
-        raw_input()
     for meta in range(len(N_att_meta_items)):
-        #omega,theta,K,links_array,veins_nodes_array,N_veins_metas_nodes,veins_nodes,veins_metas_nodes,veins_nodes_metas,N_att,N_veins_nodes
-        #theta = sum_matrix_lambda(theta,theta_comp_arrays_exclusive(omega_nodes[meta],theta,K,metas_links_arrays_nodes[meta],veins_nodes_array,N_veins_metas_nodes[meta],veins_metas_nodes[meta],veins_nodes_metas[meta],N_att_meta_nodes[meta],N_veins_nodes),lambda_nodes)
         q_kas[meta] = q_ka_comp_arrays(omega_nodes[meta],q_kas[meta],K,metas_links_arrays_nodes[meta],N_veins_metas_nodes[meta])
         omega_nodes[meta] = omega_comp_arrays_exclusive(omega_nodes[meta],q_kas[meta],theta,K,metas_links_arrays_nodes[meta])
 
@@ -976,7 +965,6 @@ for itt in range(N_itt):
         tmp = theta_comp_arrays_exclusive(omega_ages,theta,K,age_link_array,N_veins_nodes)
         for i in tmp:
             print(i)'''
-    eta2 = eta_multilayer_2(eta,omega,omega_items,veins_items_array,L,N_veins_items,lambda_items,veins_metas_items,N_att_meta_items)
     eta = eta_multilayer(eta,omega,omega_items,veins_items_array,L,N_veins_items,lambda_items,veins_metas_items,N_att_meta_items)
 
     for meta in range(len(Taus)):
@@ -997,17 +985,13 @@ for itt in range(N_itt):
     if itt%N_measure==0:
         log_like = 0.0
         log_like += log_like_comp_arrays(p_kl,eta,theta,K,L,links_array,links_ratings)
-        print('1',log_like)
         for meta in range(len(N_att_meta_items)):
             log_like += lambda_nodes*log_like_comp_arrays_exclusive(theta,q_kas[meta],K,metas_links_arrays_nodes[meta])
-        print('2',log_like)
         for meta in range(len(Taus)):
             log_like += lambda_items*log_like_comp_arrays(q_l_taus[meta],zetes[meta],eta,L,Taus[meta],metas_links_arrays_items[meta],metas_links_arrays_items_type[meta])
-        print('3',log_like)
         variation = old_log_like-log_like
 
         file_logLike.write('{}\t{}\t{}\n'.format(itt,log_like,variation))
-        print('{}\t{}\t{}\n'.format(itt,log_like,variation))
 
         '''if finished(theta,eta,p_kl,theta_old,eta_old,p_kl_old,N_nodes,N_items,N_ratings,K,L,0.0001):
             if finished(zeta,eta,q_l_tau,zeta_old,eta_old,q_l_tau_old,N_genres,N_items,2,K,Tau,0.0001):
