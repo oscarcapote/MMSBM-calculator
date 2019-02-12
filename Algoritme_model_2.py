@@ -256,7 +256,9 @@ Att_meta_nodes,N_att_meta_nodes,metas_links_arrays_nodes,veins_metas_nodes,veins
 
 
 veins_items_metas = []
+veins_items_metas_ones = []
 veins_metas_items = []
+veins_metas_items_ones = []
 metas_links_arrays_items = []
 metas_links_arrays_items_type = []#Label de s'enllaç 0/1
 N_veins_metas_items = []
@@ -265,17 +267,22 @@ for meta in range(len(items_meta_data)):
     veins_items_metas.append(np.ones((N_items,N_att_meta_items[meta]),dtype=np.int32))
     veins_items_metas[-1] *= np.arange(0,N_att_meta_items[meta])[:,np.newaxis].T
     veins_metas_items.append(np.ones((N_att_meta_items[meta],N_items),dtype=np.int32)*np.arange(0,N_items)[:,np.newaxis].T)
+    veins_metas_items_ones.append([])
+    veins_items_metas_ones.append([[] for j in range(N_items)])
     metas_links_arrays_items.append(np.zeros((N_att_meta_items[meta]*N_items,2),dtype=np.int32))
     N_veins_metas_items.append([N_items for i in range(N_att_meta_items[meta])])
     metas_links_arrays_items_type.append([])
     i = 0
     for g in range(N_att_meta_items[meta]):
         df_metas = df_items[df_items[items_meta_data[meta]].apply(lambda x: str(g) in x)][item_header]
+        veins_metas_items_ones[-1].append(df_metas.values)
+        #print(veins_metas_items_ones[-1])
         for j in range(N_items):
             metas_links_arrays_items[-1][i][0] = j
             metas_links_arrays_items[-1][i][1] = g
             if j in df_metas:
                 metas_links_arrays_items_type[-1].append(1)
+                veins_items_metas_ones[-1][j].append(g)
             else:
                 metas_links_arrays_items_type[-1].append(0)
             i += 1
@@ -284,7 +291,7 @@ print('ya estan los metas!!')
 # In[94]:
 
 
-
+#print(veins_metas_items)
 
 # In[142]:
 
@@ -491,7 +498,7 @@ def theta_comp_arrays_exclusive(omega,theta,K,links_array,veins_nodes_array,N_ve
 #@print_n_func
 #@timer
 @jit(parallel=True)
-def eta_multilayer(eta,omega,omega_items,veins_items_array,L,N_veins_items,lambda_items,veins_metas_items,N_att_meta_items):
+def eta_multilayer(eta,omega,omega_items,veins_items_array,L,N_veins_items,lambda_items,veins_metas_items_ones,veins_items_metas,veins_items_metas_ones,N_att_meta_items):
     new_eta = np.zeros((N_items,L))
     N_metas = len(N_att_meta_items)
     means = []
@@ -501,7 +508,7 @@ def eta_multilayer(eta,omega,omega_items,veins_items_array,L,N_veins_items,lambd
             for att in range(N_att):
                 c = 0.0
                 for l in range(L):
-                    means[-1][l,att] = np.sum(eta[veins_metas_items[meta][att],l])/len(veins_metas_items[meta][att])
+                    means[-1][l,att] = np.sum(eta[veins_metas_items_ones[meta][att],l])/len(veins_metas_items_ones[meta][att])
                     c += means[-1][l,att]
                 means[-1][:,att] /= c
 
@@ -512,8 +519,8 @@ def eta_multilayer(eta,omega,omega_items,veins_items_array,L,N_veins_items,lambd
         if veins==[]:
             if lambda_items==0:
                 for meta in range(N_metas):
-                    a = veins_items_metas[meta][j]
-                    new_eta[j,:] = means[meta][:,a]
+                    a = veins_items_metas_ones[meta][j]
+                    new_eta[j,:] = np.sum(means[meta][:,a],axis=1)
                 new_eta[j,:] = new_eta[j,:]/np.sum(new_eta[j,:])
                 continue
             for meta,omega_meta in enumerate(omega_items):
@@ -535,7 +542,7 @@ def eta_multilayer(eta,omega,omega_items,veins_items_array,L,N_veins_items,lambd
 #@print_n_func
 #@timer
 @jit(parallel=True)
-def eta_multilayer_2(eta,omega,omega_items,veins_items_array,L,N_veins_items,lambda_items,veins_metas_items,N_att_meta_items):
+def eta_multilayer_2(eta,omega,omega_items,veins_items_array,L,N_veins_items,lambda_items,veins_metas_items,veins_items_metas,veins_items_metas_ones,N_att_meta_items):
     new_eta = np.zeros((N_items,L))
     N_metas = len(N_att_meta_items)
     means = []
@@ -965,7 +972,7 @@ for itt in range(N_itt):
         tmp = theta_comp_arrays_exclusive(omega_ages,theta,K,age_link_array,N_veins_nodes)
         for i in tmp:
             print(i)'''
-    eta = eta_multilayer(eta,omega,omega_items,veins_items_array,L,N_veins_items,lambda_items,veins_metas_items,N_att_meta_items)
+    eta = eta_multilayer(eta,omega,omega_items,veins_items_array,L,N_veins_items,lambda_items,veins_metas_items_ones,veins_items_metas,veins_items_metas_ones,N_att_meta_items)
 
     for meta in range(len(Taus)):
         #eta2 = lambda_items*theta_comp_arrays(omega_items[meta],eta,Taus[meta],veins_items_metas[meta],N_veins_items)
