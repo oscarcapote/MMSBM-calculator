@@ -93,24 +93,27 @@ node_header = data['nodes']['nodes_header']
 item_header = data['items']['items_header']
 rating_header = data['links']['rating_header']
 
+node_separator = choose_params('\t',data['nodes'],'separator')
+item_separator =  choose_params('\t',data['items'],'separator')
+link_separator =  choose_params('\t',data['links'],'separator')
+
 # In[7]:
 
 
 
-df_links = pd.read_csv(links_base_file_dir.format(N_fold),sep='\t', engine='python')
+df_links = pd.read_csv(links_base_file_dir.format(N_fold),sep=link_separator, engine='python')
 # In[10]:
 
 # In[ ]:
 
 
-df_nodes = pd.read_csv(node_file_dir,sep='\t', engine='python')#queryodf(nodes_query, engine="IMPALA", use_cache=False, block=True)
+df_nodes = pd.read_csv(node_file_dir,sep=node_separator, engine='python')#queryodf(nodes_query, engine="IMPALA", use_cache=False, block=True)
 
 
 
 # In[9]:
 
-
-df_items = pd.read_csv(item_file_dir,sep='\t', dtype={'node_id': np.int64, 'genre_id':str}, engine='python')#queryodf(items_query, engine="IMPALA", use_cache=False, block=True)
+df_items = pd.read_csv(item_file_dir,sep=item_separator, engine='python')#queryodf(items_query, engine="IMPALA", use_cache=False, block=True)
 
 
 links_test_df = pd.read_csv(links_base_file_dir.format(N_fold),sep='\t', engine='python')
@@ -426,8 +429,8 @@ def theta_comp_arrays_multilayer_2(omega_metas,omega,theta,K,veins_nodes_array,N
 def theta_comp_arrays_multilayer(omega_metas,omega,theta,K,veins_nodes_array,N_veins_nodes,veins_metas_nodes,N_att_meta_nodes):
     new_theta = np.zeros((N_nodes,K))
     N_metas = len(N_att_meta_nodes)
+    means = []
     if lambda_nodes==0:
-        means = []
         for meta,N_att in enumerate(N_att_meta_nodes):
             means.append(np.zeros((K,N_att)))
             for att in range(N_att):
