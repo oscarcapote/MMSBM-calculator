@@ -2,11 +2,11 @@ folder: !!str ../ml-100k
 
 #Put {F} instead of the fold number
 links:
-    test: !!str formated_shufled_u{F}.test
-    base: !!str formated_shufled_u{F}.base
-    rating_header: !!str rating
-    separator_base: !!str \t
+    test: !!str formated_u{F}.test
+    base: !!str formated_u{F}.base
+    separator_base: !!str §
     separator_test: !!str \t
+    rating_header: !!str rating
 
 nodes:
     nodes_meta:
@@ -14,7 +14,6 @@ nodes:
     nodes_header: !!str userId
     file: !!str formated_users_tmp.dat
     K: !!int 10
-    separator: !!str \t
 
 items:
     items_meta:
@@ -22,7 +21,6 @@ items:
     items_header: !!str movieId
     file: !!str formated_movies_tmp.dat
     L: !!int 10
-    #separator: !!str \t
     Taus:
     - 10
 

@@ -52,6 +52,12 @@ def choose_params(arg,value,arg_value):
     else: param = arg
     return param
 
+def use_default(default,non_default,arg):
+    try:
+        if non_default[arg]!=None: return non_default[arg]
+        else: return default
+    except:
+        return default
 
 if args.K==None:
     K = data['nodes']['K']
@@ -93,31 +99,31 @@ node_header = data['nodes']['nodes_header']
 item_header = data['items']['items_header']
 rating_header = data['links']['rating_header']
 
-node_separator = choose_params('\t',data['nodes'],'separator')
-item_separator =  choose_params('\t',data['items'],'separator')
-link_separator_base =  choose_params('\t',data['links'],'separator_base')
-link_separator_test =  choose_params('\t',data['links'],'separator_link')
-
+node_separator = use_default('\t',data['nodes'],'separator')
+item_separator =  use_default('\t',data['items'],'separator')
+link_separator_base =  use_default('\t',data['links'],'separator_base')
+link_separator_test =  use_default('\t',data['links'],'separator_test')
+#print('separators',link_separator_base,link_separator_test,use_default('\t',data['links'],'separator_base'))
 # In[7]:
 
 
 
-df_links = pd.read_csv(links_base_file_dir.format(N_fold),sep=link_separator_base, engine='python')
+df_links = pd.read_csv(links_base_file_dir.format(N_fold),sep=link_separator_base.encode('utf-8'), engine='python')
 # In[10]:
 
 # In[ ]:
 
 
-df_nodes = pd.read_csv(node_file_dir,sep=node_separator, engine='python')#queryodf(nodes_query, engine="IMPALA", use_cache=False, block=True)
+df_nodes = pd.read_csv(node_file_dir,sep=node_separator.encode('utf-8'), engine='python')#queryodf(nodes_query, engine="IMPALA", use_cache=False, block=True)
 
 
 
 # In[9]:
 
-df_items = pd.read_csv(item_file_dir,sep=item_separator, engine='python')#queryodf(items_query, engine="IMPALA", use_cache=False, block=True)
+df_items = pd.read_csv(item_file_dir,sep=item_separator.encode('utf-8'), engine='python')#queryodf(items_query, engine="IMPALA", use_cache=False, block=True)
 
 
-links_test_df = pd.read_csv(links_base_file_dir.format(N_fold),sep=link_separator_test, engine='python')
+links_test_df = pd.read_csv(links_test_file_dir.format(N_fold),sep=link_separator_test.encode('utf-8'), engine='python')
 links_test = links_test_df[[node_header,item_header]].values
 
 
