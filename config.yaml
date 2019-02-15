@@ -5,7 +5,8 @@ links:
     test: !!str formated_shufled_u{F}.test
     base: !!str formated_shufled_u{F}.base
     rating_header: !!str rating
-    #separator: !!str \t
+    separator_base: !!str \t
+    separator_test: !!str \t
 
 nodes:
     nodes_meta:
