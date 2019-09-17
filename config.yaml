@@ -10,21 +10,25 @@ links:
 
 nodes:
     nodes_meta:
-    - gender_id
+    - age_gender_id
     nodes_header: !!str userId
-    file: !!str formated_users_tmp.dat
+    file: !!str formated_users_tmp2.dat
     K: !!int 10
+    separator: !!str \t
+    lambda_nodes: !!float64 1000.0
 
 items:
     items_meta:
     - genres_id
     items_header: !!str movieId
-    file: !!str formated_movies_tmp.dat
+    file: !!str formated_movies_tmp2.dat
     L: !!int 10
+    separator: !!str \t
+    lambda_items: !!float64 1000.0
     Taus:
     - 10
 
-
+seed: !!int 77777
 
 simulation:
     N_itt: !!int 3000
