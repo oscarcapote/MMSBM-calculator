@@ -15,7 +15,7 @@ nodes:
     file: !!str formated_users_tmp2.dat
     K: !!int 10
     separator: !!str \t
-    lambda_nodes: !!float64 1000.0
+    lambda_nodes: 1000.0
 
 items:
     items_meta:
@@ -24,11 +24,12 @@ items:
     file: !!str formated_movies_tmp2.dat
     L: !!int 10
     separator: !!str \t
-    lambda_items: !!float64 1000.0
+    lambda_items: 1000.0
     Taus:
     - 10
 
 seed: !!int 77777
+N_fold: !!int 2
 
 simulation:
     N_itt: !!int 3000

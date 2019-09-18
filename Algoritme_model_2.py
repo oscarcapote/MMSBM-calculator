@@ -301,10 +301,10 @@ for meta in range(len(items_meta_data)):
             metas_links_arrays_items[-1][i][1] = g
             if j in df_metas:
                 metas_links_arrays_items_type[-1].append(1)
-            if j in observed_items:
-                veins_items_metas_ones[-1][j].append(g)
             else:
                 metas_links_arrays_items_type[-1].append(0)
+            if j in observed_items:
+                veins_items_metas_ones[-1][j].append(g)
             i += 1
     metas_links_arrays_items_type[-1] = np.array(metas_links_arrays_items_type[-1])
 print('ya estan los metas!!')
