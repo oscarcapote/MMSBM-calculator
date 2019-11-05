@@ -71,11 +71,19 @@ else: L = args.L
 
 
 if args.lambda_nodes==None:
-    lambda_nodes = data['nodes']['lambda_nodes']
+    try:
+        lambda_nodes = data['nodes']['lambda_nodes']
+    except: lambda_nodes = 0.0
 else: lambda_nodes = args.lambda_nodes
+
+
 if args.lambda_items==None:
-    lambda_items = data['items']['lambda_items']
+    try:
+        lambda_items = data['items']['lambda_items']
+    except: lambda_items = 0.0
 else: lambda_items = args.lambda_items
+
+
 
 
 seed = args.seed
@@ -85,15 +93,37 @@ print('N_itt',N_itt,args.N_itt)
 N_measure = choose_params(args.N_meas,data['simulation'],'N_measure')
 N_fold = choose_params(args.Fold,data,'N_fold')#data['N_fold']
 
-node_meta_data =  data['nodes']['nodes_meta']
-items_meta_data =  data['items']['items_meta']
-Taus =  data['items']['Taus']
+
+
+if lambda_nodes==0.0:node_meta_data = []
+else:node_meta_data =  data['nodes']['nodes_meta']
+
+if lambda_items==0.0:
+    items_meta_data = []
+    Taus =  []
+else:
+    items_meta_data =  data['items']['items_meta']
+    Taus =  data['items']['Taus']
+
+
+
 N_meta_nodes = len(node_meta_data)
 N_meta_items = len(items_meta_data)
 
 
-node_file_dir = data['folder']+'/'+data['nodes']['file']
-item_file_dir = data['folder']+'/'+data['items']['file']
+print('file' not in data['items'])
+
+if 'file' in data['nodes']:
+    node_file_dir = data['folder']+'/'+data['nodes']['file']
+else:
+    node_file_dir = ''
+if 'file' in data['items']:
+    item_file_dir = data['folder']+'/'+data['items']['file']
+else:
+    item_file_dir = ''
+
+
+
 links_base_file_dir = data['folder']+'/'+data['links']['base'].replace('{F}',str(N_fold))
 links_test_file_dir = data['folder']+'/'+data['links']['test'].replace('{F}',str(N_fold))
 
@@ -109,13 +139,40 @@ print('separators',link_separator_base,link_separator_test,node_separator,item_s
 # In[7]:
 
 
-if lambda_nodes==0.0:node_meta_data = []
-if lambda_items==0.0:items_meta_data = []
+
+simu_dir_lam = 'simu_ln_{}_li_{}'.format(lambda_nodes,lambda_items)
+
+if not os.path.exists(simu_dir_lam):
+    try:
+        os.makedirs(simu_dir_lam)
+    except: pass
+
+
+if N_simu==None:
+    direct = simu_dir_lam+'/results_simu_s_{}_f_{}'.format(seed,N_fold)
+else:
+    direct = simu_dir_lam+'/results_simu_{}_f_{}'.format(N_simu,N_fold)
+simu_dir = direct
+print('l_nodes={}\nl_items={}\nK={}\nL={}\nfold={}\nseed={}'.format(lambda_nodes,lambda_items,K,L,N_fold,seed))
+
+
+if args.Redo==False:
+    if os.path.exists(direct+'/total_p.dat'):
+        print('ja estava feta!!!')
+        exit()
+    else: print('nofeta!!!')
+if not os.path.exists(simu_dir):
+    os.makedirs(simu_dir)
+if not os.path.exists(direct):
+    os.makedirs(direct)
+
 
 if sys.version_info[0] < 3:
     df_links = pd.read_csv(links_base_file_dir.format(N_fold),sep=link_separator_base.encode('utf-8'), engine='python')
-    df_nodes = pd.read_csv(node_file_dir,sep=node_separator.encode('utf-8'), engine='python')#queryodf(nodes_query, engine="IMPALA", use_cache=False, block=True)
-    df_items = pd.read_csv(item_file_dir,dtype={'node_id': np.int64, 'common':str},sep=item_separator.encode('utf-8'), engine='python')#queryodf(items_query, engine="IMPALA", use_cache=False, block=True)
+    if 'file' in data['nodes']:df_nodes = pd.read_csv(node_file_dir,sep=node_separator.encode('utf-8'), engine='python')#queryodf(nodes_query, engine="IMPALA", use_cache=False, block=True)
+    else:df_nodes = pd.DataFrame()#
+    if 'file' in data['items']:df_items = pd.read_csv(item_file_dir,dtype={'node_id': np.int64, 'common':str},sep=item_separator.encode('utf-8'), engine='python')
+    else:df_items = pd.DataFrame()#queryodf(items_query, engine="IMPALA", use_cache=False, block=True)
     links_test_df = pd.read_csv(links_test_file_dir.format(N_fold),sep=link_separator_test.encode('utf-8'), engine='python')
 else:
     df_links = pd.read_csv(links_base_file_dir.format(N_fold),sep=link_separator_base, engine='python')
@@ -142,11 +199,10 @@ for meta in items_meta_data:
 
 
 
-
 # In[10]:
 
 
-N_nodes = len(df_nodes)
+N_nodes = max(df_links.max()[node_header],links_test_df.max()[node_header])+1
 
 
 # In[11]:
@@ -158,9 +214,10 @@ N_links = len(df_links)
 # In[12]:
 
 
-N_items = len(df_items)
+N_items = max(df_links.max()[item_header],links_test_df.max()[item_header])+1
 
 
+print(N_nodes,N_items)
 # In[47]:
 
 
@@ -230,7 +287,6 @@ def obtain_links_arrays(node_header,item_header,lambda_nodes,lambda_items,rating
 
 N_ratings,links_array,links_ratings,links_by_ratings_array,veins_nodes_array,veins_items_array,N_veins_nodes,N_veins_items = obtain_links_arrays(node_header,item_header,lambda_nodes,lambda_items,rating_header)
 
-
 # In[105]:
 #@vectorize([float64(float64, float64, float64)])
 @jit
@@ -246,7 +302,7 @@ def obtain_meta_arrays(meta_list,id_header,observed):
     veins_metas = []
     veins_nodes = []
     N_veins_metas = []
-
+    print(meta_list,id_header,observed)
 
     df_filtred = df_nodes[df_nodes[id_header].isin(observed)]
     #print('aqui',len(df_filtred))
@@ -714,6 +770,7 @@ def inicialitzacio(K,L,Taus,N_nodes,N_items,N_ratings,N_att_meta_nodes,N_att_met
     theta  = np.random.rand(N_nodes,K)
     eta = np.random.rand(N_items,L)
     p_kl = np.random.rand(K,L,N_ratings)
+    #print('control-1',N_att_meta_items)
 
 
     suma = np.sum(theta,axis =1)
@@ -725,11 +782,11 @@ def inicialitzacio(K,L,Taus,N_nodes,N_items,N_ratings,N_att_meta_nodes,N_att_met
 
     omega = np.zeros((N_nodes,N_items,K,L),dtype=np.double)
     omega = omega_comp_arrays(omega,p_kl,eta,theta,K,L,links_array,links_ratings)
-
     q_l_taus = []
     zetes = []
     omega_items = []
     for i in range(len(items_meta_data)):
+        #print('control1',i)
         Tau = Taus[i]
         zetes.append(np.random.rand(N_att_meta_items[i],Tau))
         suma = np.sum(zetes[-1],axis=1)
@@ -741,6 +798,7 @@ def inicialitzacio(K,L,Taus,N_nodes,N_items,N_ratings,N_att_meta_nodes,N_att_met
 
         omega_items.append(np.zeros((N_items,N_att_meta_items[i],L,Tau),dtype=np.double))
         omega_items[-1] = omega_comp_arrays(omega_items[-1],q_l_taus[-1],zetes[-1],eta,L,Tau,metas_links_arrays_items[i],metas_links_arrays_items_type[i])
+
 
     q_kas = []
     omega_nodes = []
@@ -859,35 +917,11 @@ print('ini')
 
 
 N_ratings,links_array,links_ratings,links_by_ratings_array,veins_nodes_array,veins_items_array,N_veins_nodes,N_veins_items = obtain_links_arrays(node_header,item_header,lambda_nodes,lambda_items,rating_header)
-simu_dir_lam = 'simu_ln_{}_li_{}'.format(lambda_nodes,lambda_items)
-
-if not os.path.exists(simu_dir_lam):
-    try:
-        os.makedirs(simu_dir_lam)
-    except: pass
-
 # In[ ]:
-
 
 N_run = 'prueba/'
 direct = '.'
 
-if N_simu==None:
-    direct = simu_dir_lam+'/results_simu_s_{}_f_{}'.format(seed,N_fold)
-else:
-    direct = simu_dir_lam+'/results_simu_{}_f_{}'.format(N_simu,N_fold)
-simu_dir = direct
-print('l_nodes={}\nl_items={}\nK={}\nL={}\nfold={}\nseed={}'.format(lambda_nodes,lambda_items,K,L,N_fold,seed))
-
-if args.Redo==False:
-    if os.path.exists(direct+'/total_p.dat'):
-        print('ja estava feta!!!')
-        exit()
-    else: print('nofeta!!!')
-if not os.path.exists(simu_dir):
-    os.makedirs(simu_dir)
-if not os.path.exists(direct):
-    os.makedirs(direct)
 
 
 
@@ -895,6 +929,7 @@ if seed!=None:
     np.random.seed(int(seed))
 theta,eta,p_kl,omega,q_kas,omega_nodes,zetes,q_l_taus,omega_items = inicialitzacio(K,L,Taus,N_nodes,N_items,N_ratings,N_att_meta_nodes,N_att_meta_items,links_array,links_ratings,metas_links_arrays_nodes,metas_links_arrays_items)
 
+print('UEP!!!')
 # In[44]:
 
 ## date and time representation
@@ -973,7 +1008,7 @@ for itt in range(N_itt):
 
 
     omega = omega_comp_arrays(omega,p_kl,eta,theta,K,L,links_array,links_ratings)
-    #print(itt,'theta_1',omega[0,0])
+    #print(itt)
 
     #theta_temp = theta.copy()
     eta_temp = eta.copy()
