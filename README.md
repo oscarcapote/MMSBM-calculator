@@ -2,7 +2,7 @@
 Programa on està implementat es MMSBM amb priors
 
 # Requisits
--pandas
-  -numpy
-  -numba
-  -pyyaml
+- pandas
+- numpy
+- numba
+- PyYaml
