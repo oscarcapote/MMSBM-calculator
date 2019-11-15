@@ -34,6 +34,7 @@ parser.add_argument("-N","--N_itt",help="Maximum number of iterations",type=int)
 parser.add_argument("-n","--N_meas",help="Number of iterationts to check  the convergence",type=int)
 parser.add_argument("--N_simu",help="Optional, simulation number to label the simulation. It will substitute the seed to name the simulation.",type=int)
 parser.add_argument("-R","--Redo",help="Redo simulation if it was done before", action='store_true')
+parser.add_argument("--dir_format",help="Directory format, addig information about the lambdes (lambdes) or the groups number (groups)",default="lambdes",choices=["lambdes","groups"],type=str)
 
 
 args = parser.parse_args()
@@ -93,8 +94,6 @@ print('N_itt',N_itt,args.N_itt)
 N_measure = choose_params(args.N_meas,data['simulation'],'N_measure')
 N_fold = choose_params(args.Fold,data,'N_fold')#data['N_fold']
 
-
-
 if lambda_nodes==0.0:node_meta_data = []
 else:node_meta_data =  data['nodes']['nodes_meta']
 
@@ -139,8 +138,9 @@ print('separators',link_separator_base,link_separator_test,node_separator,item_s
 # In[7]:
 
 
+if args.dir_format == 'lambdes': simu_dir_lam = 'simu_ln_{}_li_{}'.format(lambda_nodes,lambda_items)
+else: simu_dir_lam = 'simu_K_{}_L_{}'.format(K,L)
 
-simu_dir_lam = 'simu_ln_{}_li_{}'.format(lambda_nodes,lambda_items)
 
 if not os.path.exists(simu_dir_lam):
     try:
