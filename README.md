@@ -64,7 +64,7 @@ Directory where your data that you want to analyze is stored.
 Section where you have to put information of the input filenames:
 - `test`: Filename of the test set file
 - `base`: Filename of the base set file
-- `separator_test` and `separator_base`: Separators of the test and base files
+- `separator_test` and `separator_base`: Separators of the test and base files (default `\t`)
 - `rating_header`: Header of the rating column
 If your filenames have a number referring to the fold, you can write `{F}` and the program will change it automatically for the fold number.
 ## `nodes`
@@ -73,16 +73,16 @@ Section where you put the information of your nodes
 - `K`: Numbers of nodes groups
 - `file`:Filename with nodes metadata's information
 - `nodes_meta`: Vector with the name of all the  nodes' metadata headers'
-- `separator`: Separators of the nodes' file
+- `separator`: Separators of the nodes' file (default `\t`)
 - `lambda_items`: Intensity of nodes's priors
 
-## `nodes`
+## `items`
 Section where you put the information of your items
 - `items_header`: Header of the items identification column
 - `L`: Numbers of items groups
-- `file`:Filename with nodes metadata's information
+- `file`:Filename with items metadata's information
 - `items_meta`: Vector with the name of all the  items' metadata headers'
-- `separator`: Separators of the items' file
+- `separator`: Separators of the items' file (default `\t`)
 - `lambda_items`: Intensity of items's priors
 - `Taus`: Vector with the numbers of groups of items'
 
@@ -93,3 +93,6 @@ Integer with the seed that the algorithm will initialize the membership and prob
 Information about the simulation procedure
 - `N_itt` Number of iterationts
 - `N_measure` Number of iterations of separation between convergence checking
+
+# Use
+To run the program you have to go to the directory where the `config.yaml` is and run the code.
