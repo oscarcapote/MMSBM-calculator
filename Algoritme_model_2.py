@@ -201,8 +201,8 @@ for meta in items_meta_data:
 
 # In[10]:
 
-
-N_nodes = max(df_links.max()[node_header],links_test_df.max()[node_header])+1
+if 'file' in data['nodes']: N_nodes = len(df_nodes)
+else: N_nodes = max(df_links.max()[node_header],links_test_df.max()[node_header])+1
 
 
 # In[11]:
@@ -214,7 +214,8 @@ N_links = len(df_links)
 # In[12]:
 
 
-N_items = max(df_links.max()[item_header],links_test_df.max()[item_header])+1
+if 'file' in data['items']: N_nodes = len(df_items)
+else: N_items = max(df_links.max()[item_header],links_test_df.max()[item_header])+1
 
 
 print(N_nodes,N_items)
@@ -497,8 +498,7 @@ def theta_comp_arrays_multilayer_2(omega_metas,omega,theta,K,veins_nodes_array,N
 def theta_comp_arrays_multilayer(omega_metas,omega,theta,K,veins_nodes_array,N_veins_nodes,observed_nodes,N_att_meta_nodes):
     new_theta = np.zeros((N_nodes,K))
     N_metas = len(N_att_meta_nodes)
-    means = np.sum(theta[observed_nodes,:])/len(observed_nodes)
-    means /= np.sum(means)
+    means = np.sum(theta[observed_nodes,:],axis=0)/len(observed_nodes)
 
     for i in prange(N_nodes):
         veins_node = veins_nodes_array[i]
@@ -553,7 +553,7 @@ def theta_comp_arrays_exclusive(omega,theta,K,links_array,veins_nodes_array,N_ve
 def eta_multilayer(eta,omega,omega_items,veins_items_array,L,N_veins_items,lambda_items,veins_metas_items_ones,veins_items_metas,observed_items,N_att_meta_items):
     new_eta = np.zeros((N_items,L))
     N_metas = len(N_att_meta_items)
-    means = np.sum(eta[observed_items,:])/len(observed_items)
+    means = np.sum(eta[observed_items,:],axis=0)/len(observed_items)
 
     for j in prange(N_items):
         veins = veins_items_array[j]
