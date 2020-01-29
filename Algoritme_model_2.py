@@ -176,10 +176,12 @@ if sys.version_info[0] < 3:
     links_test_df = pd.read_csv(links_test_file_dir.format(N_fold),sep=link_separator_test.encode('utf-8'), engine='python')
 else:
     df_links = pd.read_csv(links_base_file_dir.format(N_fold),sep=link_separator_base, engine='python')
-    df_nodes = pd.read_csv(node_file_dir,sep=node_separator, engine='python')#queryodf(nodes_query, engine="IMPALA", use_cache=False, block=True)
+    if 'file' in data['nodes']:df_nodes = pd.read_csv(node_file_dir,sep=node_separator, engine='python')#queryodf(nodes_query, engine="IMPALA", use_cache=False, block=True)
+    else:df_nodes = pd.DataFrame()
     print(df_nodes.head())
     print('-----',node_separator)
-    df_items = pd.read_csv(item_file_dir,sep=item_separator,dtype={'node_id': np.int64, 'genre_id':str}, engine='python')#queryodf(items_query, engine="IMPALA", use_cache=False, block=True)
+    if 'file' in data['items']:df_items = pd.read_csv(item_file_dir,sep=item_separator,dtype={'node_id': np.int64, 'genre_id':str}, engine='python')#queryodf(items_query, engine="IMPALA", use_cache=False, block=True)
+    else:df_items = pd.DataFrame()
     links_test_df = pd.read_csv(links_test_file_dir.format(N_fold),sep=link_separator_test, engine='python')
 
 print(links_test_df.head())
@@ -214,7 +216,7 @@ N_links = len(df_links)
 # In[12]:
 
 
-if 'file' in data['items']: N_nodes = len(df_items)
+if 'file' in data['items']: N_items = len(df_items)
 else: N_items = max(df_links.max()[item_header],links_test_df.max()[item_header])+1
 
 
@@ -923,7 +925,7 @@ N_run = 'prueba/'
 direct = '.'
 
 
-
+#BUCLE AQUI
 
 if seed!=None:
     np.random.seed(int(seed))
@@ -935,7 +937,7 @@ print('UEP!!!')
 ## date and time representation
 file_info = open(simu_dir+'/info_simus.info','w')
 file_info.write("Simulation started at:" + time_lib.strftime("%c")+'\n\n')
-file_info.write('With parameters:\nK={}\nL={}\nN_nodes={}\nN_items={}\nN_ratings={}\nLinks_observed={}\n\n############################\n'.format(K,L,N_nodes,N_items,N_ratings,N_links))
+file_info.write('With parameters:\nK={}\nL={}\nN_nodes={}\nN_items={}\nN_ratings={}\nLinks_observed={}\nSeed={}\n\n############################\n'.format(K,L,N_nodes,N_items,N_ratings,N_links,seed))
 file_info.write('Prior metadatas of nodes:\n')
 if node_meta_data != None:
     for meta in node_meta_data:
@@ -957,7 +959,7 @@ tik_simu = time()
 
 #theta,eta,p_kl,omega,q_ka_ages,omega_ages,q_ka_genders,omega_genders,zeta,q_l_tau,omega_genres = inicialitzacio(K,L,Tau,N_nodes,N_items,N_ratings,N_ages,N_genres,N_genders,links_array,links_ratings,genre_link_array,age_link_array,gender_link_array,link_genre)
 #eta,theta,p_kl,q_l_taus,zetes,q_kas,omega,omega_items,omega_nodes = load_matrix_simu('input_matrix',K,L,N_ratings,items_meta_data,Taus,node_meta_data,N_att_meta_items)
-file_logLike = open(direct+'/log_evolution.dat'.format(N_run),'w')
+file_logLike = open(simu_dir+'/log_evolution.dat'.format(N_run),'w')
 old_log_like = 0.0
 old_log_like += log_like_comp_arrays(p_kl,eta,theta,K,L,links_array,links_ratings)
 
