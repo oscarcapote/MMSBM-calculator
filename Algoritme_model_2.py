@@ -497,10 +497,11 @@ def theta_comp_arrays_multilayer_2(omega_metas,omega,theta,K,veins_nodes_array,N
 #@print_n_func
 #@timer
 @jit(cache=True,locals=dict(i=int64,j=int64,k=int64,l=int64,suma=double,new_theta=double[:,:]),parallel=True)
-def theta_comp_arrays_multilayer(omega_metas,omega,theta,K,veins_nodes_array,N_veins_nodes,observed_nodes,N_att_meta_nodes):
+def theta_comp_arrays_multilayer(omega_metas,omega,theta,K,veins_nodes_array,N_veins_nodes,observed_nodes,N_att_meta_nodes,veins_nodes_metas):
     new_theta = np.zeros((N_nodes,K))
     N_metas = len(N_att_meta_nodes)
-    means = np.sum(theta[observed_nodes,:],axis=0)/len(observed_nodes)
+    means = np.sum(theta[observed_nodes,:])/len(observed_nodes)
+    means /= np.sum(means)
 
     for i in prange(N_nodes):
         veins_node = veins_nodes_array[i]
@@ -509,15 +510,14 @@ def theta_comp_arrays_multilayer(omega_metas,omega,theta,K,veins_nodes_array,N_v
                 new_theta[i,:] = means
                 continue
             for meta in range(N_metas):
-                new_theta[i,:] += omega_metas[meta][i,:]
+                new_theta[i,:] += omega_metas[meta][i,veins_nodes_metas[meta][i],:]
             new_theta[i,:] *= lambda_nodes/N_veins_nodes[i]
         else:
             for meta in range(N_metas):
-                new_theta[i,:] += lambda_nodes*omega_metas[meta][i,:]
+                new_theta[i,:] += lambda_nodes*omega_metas[meta][i,veins_nodes_metas[meta][i],:]
             new_theta[i,:] += np.sum(omega[i,veins_node,:,:],axis=(0,2))
             new_theta[i,:] /= N_veins_nodes[i]
     return new_theta
-
 
 
 #@print_n_func
@@ -682,17 +682,14 @@ def p_kl_comp_arrays(omega,p_kl,eta,theta,K,L,links_array,links_ratings):
 #@timer
 @jit(cache=True,nopython=True,parallel=True)
 def q_ka_comp_arrays(omega,q_ka,K,links_array,att_elements):
-    q_ka[:,:] = 0
-    for k in prange(K):
-        for link  in range(len(links_array)):
-            i = links_array[link][0]
-            a = links_array[link][1]
-            q_ka[k,a] += omega[i,k]
-
-        #suma = np.sum(q_ka[k,a,:])
-        q_ka[k,:] /= att_elements[a]
-    return q_ka
-
+    q_ka2 = np.zeros(q_ka.shape)
+    for link  in range(len(links_array)):
+        i = links_array[link][0]
+        a = links_array[link][1]
+        for k in range(K):
+            #print(i,k,a)
+            q_ka2[k,a] += omega[i,a,k]/att_elements[a]
+    return q_ka2
 
 # In[152]:
 
@@ -702,19 +699,16 @@ def q_ka_comp_arrays(omega,q_ka,K,links_array,att_elements):
 
 @print_n_func
 #@timer
-@jit(cache=True,nopython=True,locals=dict(i=int64,j=int64,k=int64,l=int64,suma=double),parallel=True)
+#@jit(cache=True,nopython=True,locals=dict(i=int64,j=int64,k=int64,l=int64,suma=double),parallel=True)
+#@jit(nopython=True,locals=dict(i=int64,j=int64,k=int64,l=int64,suma=double),parallel=True)
 def omega_comp_arrays(omega,p_kl,eta,theta,K,L,links_array,links_ratings):
     #new_omega = np.array(omega)
     for link  in range(len(links_ratings)):
         i = links_array[link][0]
         j = links_array[link][1]
         rating = links_ratings[link]
-        suma = 0
-        for k in range(K):
-            for l in range(L):
-                omega[i,j,k,l] = p_kl[k,l,rating]*theta[i,k]*eta[j,l]
-                #else:print(p_kl[k,l,rating],theta[i,k],eta[j,l])
-                suma += omega[i,j,k,l]
+        omega[i,j,:,:] = p_kl[:,:,rating]*np.matmul(theta[i,:,np.newaxis],eta[j,np.newaxis,:])
+        suma = omega[i,j,:,:].sum()
         omega[i,j,:,:] /= suma+1e-16
     return omega
 
@@ -730,17 +724,12 @@ def omega_comp_arrays(omega,p_kl,eta,theta,K,L,links_array,links_ratings):
 @print_n_func
 #@timer
 #@jit(nopython=True,locals=dict(i=int64,a=int64,k=int64,link=int64,suma=double),parallel=True)
-def omega_comp_arrays_exclusive(omega,q_ka,theta,K,links_array):
-    for link  in prange(len(links_array)):
-        i = links_array[link][0]
-        a = links_array[link][1]
-        suma = 0.0
-        for k in range(K):
-            omega[i,k] = q_ka[k,a]*theta[i,k]
-            suma += omega[i,k]
-        #if suma<1.0e-16:
-        #    print(i,veins_nodes_array[i])#,theta[i,:],q_ka[:,a])
-        omega[i,:] /= suma+1e-16
+def omega_comp_arrays_exclusive(omega,q_ka,theta,N_nodes,N_att_meta):
+    for i in range(N_nodes):
+        for a in range(int(N_att_meta)):
+            omega[i,a,:] = theta[i,:]*q_ka[:,a]
+    s = omega.sum(axis=2)
+    omega /= s[:,:,np.newaxis]
     return omega
 
 @print_n_func
@@ -811,8 +800,8 @@ def inicialitzacio(K,L,Taus,N_nodes,N_items,N_ratings,N_att_meta_nodes,N_att_met
         suma = np.sum(q_kas[-1],axis =1)
         q_kas[-1] /=suma[:,np.newaxis]
 
-        omega_nodes.append(np.zeros((N_nodes,K),dtype=np.double))
-        omega_nodes[-1] = omega_comp_arrays_exclusive(omega_nodes[-1],q_kas[-1],theta,K,metas_links_arrays_nodes[meta])
+        omega_nodes.append(np.zeros((N_nodes,N_att_meta_nodes[-1],K),dtype=np.double))
+        omega_nodes[-1] = omega_comp_arrays_exclusive(omega_nodes[-1],q_kas[-1],theta,N_nodes,N_att_meta_nodes[-1])
 
     #omega_comp_arrays.inspect_types()
     '''simu_dir = "input_matrix"
@@ -985,11 +974,11 @@ q_l_taus_old = deepcopy(q_l_taus)
 
 print('simu',N_itt,N_measure)
 for itt in range(N_itt):
-    theta = theta_comp_arrays_multilayer(omega_nodes,omega,theta,K,veins_nodes_array,N_veins_nodes,observed_nodes,N_att_meta_nodes)
+    theta = theta_comp_arrays_multilayer(omega_nodes,omega,theta,K,veins_nodes_array,N_veins_nodes,observed_nodes,N_att_meta_nodes,veins_nodes_metas)
 
     for meta in range(len(node_meta_data)):
         q_kas[meta] = q_ka_comp_arrays(omega_nodes[meta],q_kas[meta],K,metas_links_arrays_nodes[meta],N_veins_metas_nodes[meta])
-        omega_nodes[meta] = omega_comp_arrays_exclusive(omega_nodes[meta],q_kas[meta],theta,K,metas_links_arrays_nodes[meta])
+        omega_nodes[meta] = omega_comp_arrays_exclusive(omega_nodes[meta],q_kas[meta],theta,N_nodes,N_att_meta_nodes[meta])
 
     '''if itt>-1:
         print(itt)
