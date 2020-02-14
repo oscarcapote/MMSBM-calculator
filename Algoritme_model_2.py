@@ -191,6 +191,7 @@ links_test = links_test_df[[node_header,item_header]].values
 
 N_att_meta_items = []
 for meta in items_meta_data:
+    df_items[meta] = df_items[meta].astype('str')
     try:
         df_items[meta] = df_items[meta].str.split('|')
     except AttributeError:
@@ -317,7 +318,8 @@ def obtain_meta_arrays(meta_list,id_header,observed):
         N_att_meta.append(len(Att_meta[-1]))
         #Arrays
         metas_links_arrays.append(df_nodes[[id_header,meta]][df_nodes[meta].notnull()].astype(int).values)
-        veins_metas.append([df_filtred[id_header][df_filtred[meta]==int(att)].values for att in range(N_att_meta[-1])])
+        #veins_metas.append([df_filtred[id_header][df_filtred[meta]==int(att)].values for att in range(N_att_meta[-1])])
+        veins_metas.append([df_nodes[id_header][df_nodes[meta]==int(att)].values for att in range(N_att_meta[-1])])
         N_veins_metas.append([float(len(arr)) for arr in veins_metas[-1]])
         veins_nodes.append(np.ones(len(df_nodes),dtype=np.int32))
         for n,att in metas_links_arrays[-1]:
@@ -326,6 +328,7 @@ def obtain_meta_arrays(meta_list,id_header,observed):
     return Att_meta,N_att_meta,metas_links_arrays,veins_metas,veins_nodes,N_veins_metas
 
 observed_nodes = np.unique(links_array[:,0])
+nodes_no_observed = np.array([i for i in range(N_nodes) if i not in observed_nodes])
 print('uep1 ',df_nodes.head())
 #print('aqui',len(observed),len(df_nodes))
 Att_meta_nodes,N_att_meta_nodes,metas_links_arrays_nodes,veins_metas_nodes,veins_nodes_metas,N_veins_metas_nodes = obtain_meta_arrays(node_meta_data,node_header,observed_nodes)
@@ -339,6 +342,7 @@ metas_links_arrays_items = []
 metas_links_arrays_items_type = []#Label de s'enllaç 0/1
 N_veins_metas_items = []
 observed_items = np.unique(links_array[:,1])
+items_no_observed = np.array([i for i in range(N_items) if i not in observed_items])
 print('uep 2')
 #category_items_inverse = {category_items[cat]:cat for cat in category_items}
 for meta in range(len(items_meta_data)):
@@ -496,27 +500,17 @@ def theta_comp_arrays_multilayer_2(omega_metas,omega,theta,K,veins_nodes_array,N
 
 #@print_n_func
 #@timer
-@jit(cache=True,locals=dict(i=int64,j=int64,k=int64,l=int64,suma=double,new_theta=double[:,:]),parallel=True)
-def theta_comp_arrays_multilayer(omega_metas,omega,theta,K,veins_nodes_array,N_veins_nodes,observed_nodes,N_att_meta_nodes,veins_nodes_metas):
-    new_theta = np.zeros((N_nodes,K))
-    N_metas = len(N_att_meta_nodes)
-    means = np.sum(theta[observed_nodes,:])/len(observed_nodes)
-    means /= np.sum(means)
-
-    for i in prange(N_nodes):
-        veins_node = veins_nodes_array[i]
-        if veins_node==[]:
-            if lambda_nodes==0:
-                new_theta[i,:] = means
-                continue
-            for meta in range(N_metas):
-                new_theta[i,:] += omega_metas[meta][i,veins_nodes_metas[meta][i],:]
-            new_theta[i,:] *= lambda_nodes/N_veins_nodes[i]
-        else:
-            for meta in range(N_metas):
-                new_theta[i,:] += lambda_nodes*omega_metas[meta][i,veins_nodes_metas[meta][i],:]
-            new_theta[i,:] += np.sum(omega[i,veins_node,:,:],axis=(0,2))
-            new_theta[i,:] /= N_veins_nodes[i]
+@jit()
+def theta_comp_arrays_multilayer(omega_metas,omega,theta,K,observed_nodes,nodes_no_observed,N_veins_nodes):
+    #new_theta = np.zeros((N_nodes,K))
+    N_metas = len(omega_metas)
+    means = np.sum(theta[observed_nodes,:])/float(len(observed_nodes))
+    means /= means#.sum()
+    new_theta = omega.sum(axis=1).sum(axis=2)
+    for meta in range(N_metas):
+        new_theta += omega_nodes[meta].sum(axis=1)*lambda_nodes
+    new_theta /= N_veins_nodes
+    if lambda_nodes == 0:new_theta[nodes_no_observed] = means
     return new_theta
 
 
@@ -551,32 +545,23 @@ def theta_comp_arrays_exclusive(omega,theta,K,links_array,veins_nodes_array,N_ve
 
 #@print_n_func
 #@timer
-@jit(cache=True,parallel=True)
-def eta_multilayer(eta,omega,omega_items,veins_items_array,L,N_veins_items,lambda_items,veins_metas_items_ones,veins_items_metas,observed_items,N_att_meta_items):
+#@jit(cache=True,parallel=True)
+def eta_multilayer(eta,omega,omega_flat,N_veins_items,lambda_items,L,Taus,items_no_observed,N_att_meta_items):
     new_eta = np.zeros((N_items,L))
     N_metas = len(N_att_meta_items)
-    means = np.sum(eta[observed_items,:],axis=0)/len(observed_items)
+    means = np.sum(eta[observed_items,:])/len(observed_items)
 
-    for j in prange(N_items):
-        veins = veins_items_array[j]
-        if veins==[]:
-            if lambda_items==0:
-                new_eta[j,:] = means
-                continue
-            for meta,omega_meta in enumerate(omega_items):
-                meta_veins = veins_items_metas[meta][j]
-                new_eta[j,:] += np.sum(omega_meta[j,meta_veins,:,:],axis=(0,2))#*lambda_items
-            new_eta[j,:] *= lambda_items/N_veins_items[j]
-        else:
-            for meta,omega_meta in enumerate(omega_items):
-                meta_veins = veins_items_metas[meta][j]
-                new_eta[j,:] += np.sum(omega_meta[j,meta_veins,:,:],axis=(0,2))*lambda_items
-                    #raw_input()
-            new_eta[j,:] += np.sum(omega[veins,j,:,:],axis=(0,1))
-            #print('1',np.sum(omega[veins,j,:,:],axis=(0,1)))
-            new_eta[j,:] /= N_veins_items[j]
-            #print('2',new_eta[j,:])
-            #raw_input()
+    new_eta += omega.sum(axis=0).sum(axis=1)
+
+    start = 0
+    for meta,n in enumerate(N_att_meta_items):
+        omega_meta = omega_flat[start:start+n*L*N_items*Taus[meta]].reshape(N_items,n,L,Taus[meta])
+        new_eta += omega_meta.sum(axis=1).sum(axis=2)*lambda_items
+        start += n*L*N_items*Taus[meta]
+    for l in range(L):
+        new_eta[:,l] /= N_veins_items
+    if lambda_items==0:
+        new_eta[items_no_observed] = means
     return new_eta
 
 # In[6]:
@@ -682,14 +667,14 @@ def p_kl_comp_arrays(omega,p_kl,eta,theta,K,L,links_array,links_ratings):
 #@timer
 @jit(cache=True,nopython=True,parallel=True)
 def q_ka_comp_arrays(omega,q_ka,K,links_array,att_elements):
-    q_ka2 = np.zeros(q_ka.shape)
+    q_ka2 = np.zeros((K,len(att_elements)))
     for link  in range(len(links_array)):
         i = links_array[link][0]
         a = links_array[link][1]
         for k in range(K):
-            #print(i,k,a)
-            q_ka2[k,a] += omega[i,a,k]/att_elements[a]
+            q_ka2[k,a] += omega[i,a,k]/(att_elements[a]+1.0e-16)
     return q_ka2
+
 
 # In[152]:
 
@@ -697,7 +682,7 @@ def q_ka_comp_arrays(omega,q_ka,K,links_array,att_elements):
 # In[9]:
 
 
-@print_n_func
+#@print_n_func
 #@timer
 #@jit(cache=True,nopython=True,locals=dict(i=int64,j=int64,k=int64,l=int64,suma=double),parallel=True)
 #@jit(nopython=True,locals=dict(i=int64,j=int64,k=int64,l=int64,suma=double),parallel=True)
@@ -722,14 +707,16 @@ def omega_comp_arrays(omega,p_kl,eta,theta,K,L,links_array,links_ratings):
 
 
 @print_n_func
-#@timer
-#@jit(nopython=True,locals=dict(i=int64,a=int64,k=int64,link=int64,suma=double),parallel=True)
-def omega_comp_arrays_exclusive(omega,q_ka,theta,N_nodes,N_att_meta):
-    for i in range(N_nodes):
-        for a in range(int(N_att_meta)):
-            omega[i,a,:] = theta[i,:]*q_ka[:,a]
-    s = omega.sum(axis=2)
-    omega /= s[:,:,np.newaxis]
+@jit(nopython=True,locals=dict(i=int64,a=int64,k=int64,link=int64,suma=double),parallel=True)
+def omega_comp_arrays_exclusive(omega,q_ka,theta,N_nodes,metas_links_arrays_nodes):
+    for j in prange(len(metas_links_arrays_nodes)):
+        i = metas_links_arrays_nodes[j,0]
+        a = metas_links_arrays_nodes[j,1]
+        s = 0
+        for k in range(K):
+            omega[i,a,k] = theta[i,k]*q_ka[k,a]
+            s +=omega[i,a,k]
+        omega[i,a,:] /= s
     return omega
 
 @print_n_func
@@ -761,7 +748,6 @@ def inicialitzacio(K,L,Taus,N_nodes,N_items,N_ratings,N_att_meta_nodes,N_att_met
     theta  = np.random.rand(N_nodes,K)
     eta = np.random.rand(N_items,L)
     p_kl = np.random.rand(K,L,N_ratings)
-    #print('control-1',N_att_meta_items)
 
 
     suma = np.sum(theta,axis =1)
@@ -773,11 +759,11 @@ def inicialitzacio(K,L,Taus,N_nodes,N_items,N_ratings,N_att_meta_nodes,N_att_met
 
     omega = np.zeros((N_nodes,N_items,K,L),dtype=np.double)
     omega = omega_comp_arrays(omega,p_kl,eta,theta,K,L,links_array,links_ratings)
+
     q_l_taus = []
     zetes = []
     omega_items = []
     for i in range(len(items_meta_data)):
-        #print('control1',i)
         Tau = Taus[i]
         zetes.append(np.random.rand(N_att_meta_items[i],Tau))
         suma = np.sum(zetes[-1],axis=1)
@@ -790,7 +776,6 @@ def inicialitzacio(K,L,Taus,N_nodes,N_items,N_ratings,N_att_meta_nodes,N_att_met
         omega_items.append(np.zeros((N_items,N_att_meta_items[i],L,Tau),dtype=np.double))
         omega_items[-1] = omega_comp_arrays(omega_items[-1],q_l_taus[-1],zetes[-1],eta,L,Tau,metas_links_arrays_items[i],metas_links_arrays_items_type[i])
 
-
     q_kas = []
     omega_nodes = []
     for meta,N in enumerate(N_att_meta_nodes):
@@ -801,7 +786,7 @@ def inicialitzacio(K,L,Taus,N_nodes,N_items,N_ratings,N_att_meta_nodes,N_att_met
         q_kas[-1] /=suma[:,np.newaxis]
 
         omega_nodes.append(np.zeros((N_nodes,N_att_meta_nodes[-1],K),dtype=np.double))
-        omega_nodes[-1] = omega_comp_arrays_exclusive(omega_nodes[-1],q_kas[-1],theta,N_nodes,N_att_meta_nodes[-1])
+        omega_nodes[-1] = omega_comp_arrays_exclusive(omega_nodes[-1],q_kas[-1],theta,N_nodes,metas_links_arrays_nodes[-1])
 
     #omega_comp_arrays.inspect_types()
     '''simu_dir = "input_matrix"
@@ -822,7 +807,7 @@ def inicialitzacio(K,L,Taus,N_nodes,N_items,N_ratings,N_att_meta_nodes,N_att_met
     for meta in range(len(N_att_meta_items)):
         np.savetxt(simu_dir+'/q_ka_{}.dat'.format(node_meta_data[meta]),q_kas[meta])'''
 
-
+    #print(theta,eta,p_kl,omega,q_kas,omega_nodes,zetes,q_l_taus,omega_items)
     return theta,eta,p_kl,omega,q_kas,omega_nodes,zetes,q_l_taus,omega_items
 
 
@@ -974,19 +959,29 @@ q_l_taus_old = deepcopy(q_l_taus)
 
 print('simu',N_itt,N_measure)
 for itt in range(N_itt):
-    theta = theta_comp_arrays_multilayer(omega_nodes,omega,theta,K,veins_nodes_array,N_veins_nodes,observed_nodes,N_att_meta_nodes,veins_nodes_metas)
+    theta = theta_comp_arrays_multilayer(omega_nodes,omega,theta,K,observed_nodes,nodes_no_observed,np.array(N_veins_nodes)[:,np.newaxis])
 
     for meta in range(len(node_meta_data)):
         q_kas[meta] = q_ka_comp_arrays(omega_nodes[meta],q_kas[meta],K,metas_links_arrays_nodes[meta],N_veins_metas_nodes[meta])
-        omega_nodes[meta] = omega_comp_arrays_exclusive(omega_nodes[meta],q_kas[meta],theta,N_nodes,N_att_meta_nodes[meta])
 
+        #print(itt,q_kas[meta].sum())
+        omega_nodes[meta] = omega_comp_arrays_exclusive(omega_nodes[meta],q_kas[meta],theta,N_nodes,metas_links_arrays_nodes[meta])
     '''if itt>-1:
         print(itt)
         #print(theta)
         tmp = theta_comp_arrays_exclusive(omega_ages,theta,K,age_link_array,N_veins_nodes)
         for i in tmp:
             print(i)'''
-    eta = eta_multilayer(eta,omega,omega_items,veins_items_array,L,N_veins_items,lambda_items,veins_metas_items_ones,veins_items_metas,observed_items,N_att_meta_items)
+    N_om = 0
+    for meta,n in enumerate(N_att_meta_items):
+        N_om += n*L*N_items*Taus[meta]
+    omega_items_flated = np.zeros(N_om)
+
+    start = 0
+    for meta,o in enumerate(omega_items):
+        omega_items_flated[start:N_att_meta_items[meta]*L*N_items*Taus[meta]+start] = o.flatten()
+        start += N_att_meta_items[meta]*L*N_items
+    eta = eta_multilayer(eta,omega,omega_items_flated,N_veins_items,lambda_items,L,Taus,items_no_observed,N_att_meta_items)
 
     for meta in range(len(items_meta_data)):
         #eta2 = lambda_items*theta_comp_arrays(omega_items[meta],eta,Taus[meta],veins_items_metas[meta],N_veins_items)
