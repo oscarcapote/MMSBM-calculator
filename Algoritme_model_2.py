@@ -505,7 +505,7 @@ def theta_comp_arrays_multilayer(omega_metas,omega,theta,K,observed_nodes,nodes_
     #new_theta = np.zeros((N_nodes,K))
     N_metas = len(omega_metas)
     means = np.sum(theta[observed_nodes,:])/float(len(observed_nodes))
-    means /= means#.sum()
+    #means /= means#.sum()
     new_theta = omega.sum(axis=1).sum(axis=2)
     for meta in range(N_metas):
         new_theta += omega_nodes[meta].sum(axis=1)*lambda_nodes
