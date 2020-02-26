@@ -685,14 +685,14 @@ def q_ka_comp_arrays(omega,q_ka,K,links_array,att_elements):
 #@print_n_func
 #@timer
 #@jit(cache=True,nopython=True,locals=dict(i=int64,j=int64,k=int64,l=int64,suma=double),parallel=True)
-#@jit(nopython=True,locals=dict(i=int64,j=int64,k=int64,l=int64,suma=double),parallel=True)
+@jit(nopython=True,locals=dict(i=int64,j=int64,k=int64,l=int64,suma=double))
 def omega_comp_arrays(omega,p_kl,eta,theta,K,L,links_array,links_ratings):
     #new_omega = np.array(omega)
     for link  in range(len(links_ratings)):
         i = links_array[link][0]
         j = links_array[link][1]
         rating = links_ratings[link]
-        omega[i,j,:,:] = p_kl[:,:,rating]*np.matmul(theta[i,:,np.newaxis],eta[j,np.newaxis,:])
+        omega[i,j,:,:] = p_kl[:,:,rating]*(np.expand_dims(theta[i,:], axis=1)@np.expand_dims(eta[j,:],axis=0))
         suma = omega[i,j,:,:].sum()
         omega[i,j,:,:] /= suma+1e-16
     return omega
@@ -707,6 +707,18 @@ def omega_comp_arrays(omega,p_kl,eta,theta,K,L,links_array,links_ratings):
 
 
 @print_n_func
+#@timer
+#@jit(nopython=True,locals=dict(i=int64,a=int64,k=int64,link=int64,suma=double),parallel=True)
+@jit(nopython=True,locals=dict(i=int64,a=int64,k=int64,link=int64,suma=double))
+def omega_comp_arrays_exclusive(omega,q_ka,theta,N_nodes,N_att_meta):
+    o = np.zeros(omega.shape)
+    for i in range(N_nodes):
+        for a in range(int(N_att_meta)):
+            o[i,a,:] = theta[i,:]*q_ka[:,a]
+    s = o.sum(axis=2)+1e-16
+    o /= np.expand_dims(s, axis=2)
+    return o
+
 @jit(nopython=True,locals=dict(i=int64,a=int64,k=int64,link=int64,suma=double),parallel=True)
 def omega_comp_arrays_exclusive(omega,q_ka,theta,N_nodes,metas_links_arrays_nodes):
     for j in prange(len(metas_links_arrays_nodes)):
