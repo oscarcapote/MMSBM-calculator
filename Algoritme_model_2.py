@@ -665,7 +665,7 @@ def p_kl_comp_arrays(omega,p_kl,eta,theta,K,L,links_array,links_ratings):
 
 @print_n_func
 #@timer
-@jit(cache=True,nopython=True,parallel=True)
+@jit(cache=True,nopython=True)
 def q_ka_comp_arrays(omega,q_ka,K,links_array,att_elements):
     q_ka2 = np.zeros((K,len(att_elements)))
     s = np.zeros(K)
