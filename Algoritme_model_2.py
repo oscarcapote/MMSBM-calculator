@@ -504,7 +504,7 @@ def theta_comp_arrays_multilayer_2(omega_metas,omega,theta,K,veins_nodes_array,N
 def theta_comp_arrays_multilayer(omega_metas,omega,theta,K,observed_nodes,nodes_no_observed,N_veins_nodes):
     #new_theta = np.zeros((N_nodes,K))
     N_metas = len(omega_metas)
-    means = np.sum(theta[observed_nodes,:])/float(len(observed_nodes))
+    means = np.sum(theta[observed_nodes,:],axis=0)/float(len(observed_nodes))
     #means /= means#.sum()
     new_theta = omega.sum(axis=1).sum(axis=2)
     for meta in range(N_metas):
@@ -549,7 +549,7 @@ def theta_comp_arrays_exclusive(omega,theta,K,links_array,veins_nodes_array,N_ve
 def eta_multilayer(eta,omega,omega_flat,N_veins_items,lambda_items,L,Taus,items_no_observed,N_att_meta_items):
     new_eta = np.zeros((N_items,L))
     N_metas = len(N_att_meta_items)
-    means = np.sum(eta[observed_items,:])/len(observed_items)
+    means = np.sum(eta[observed_items,:],axis=0)/len(observed_items)
 
     new_eta += omega.sum(axis=0).sum(axis=1)
 
@@ -668,11 +668,15 @@ def p_kl_comp_arrays(omega,p_kl,eta,theta,K,L,links_array,links_ratings):
 @jit(cache=True,nopython=True,parallel=True)
 def q_ka_comp_arrays(omega,q_ka,K,links_array,att_elements):
     q_ka2 = np.zeros((K,len(att_elements)))
+    s = np.zeros(K)
     for link  in range(len(links_array)):
         i = links_array[link][0]
         a = links_array[link][1]
         for k in range(K):
-            q_ka2[k,a] += omega[i,a,k]/(att_elements[a]+1.0e-16)
+            q_ka2[k,a] += omega[i,a,k]#/(att_elements[a]+1.0e-16)
+            s[k] += omega[i,a,k]
+    q_ka2 /= np.expand_dims(s,axis=1)+1.0e-16
+    #q_ka2 /= s[:,np.newaxis]
     return q_ka2
 
 
