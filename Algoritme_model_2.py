@@ -510,7 +510,7 @@ def theta_comp_arrays_multilayer(omega_metas,omega,theta,K,observed_nodes,nodes_
     for meta in range(N_metas):
         new_theta += omega_nodes[meta].sum(axis=1)*lambda_nodes
     new_theta /= N_veins_nodes
-    if lambda_nodes == 0:new_theta[nodes_no_observed] = means
+    if lambda_nodes == 0 and nodes_no_observed!=[]:new_theta[nodes_no_observed] = means
     return new_theta
 
 
@@ -560,7 +560,7 @@ def eta_multilayer(eta,omega,omega_flat,N_veins_items,lambda_items,L,Taus,items_
         start += n*L*N_items*Taus[meta]
     for l in range(L):
         new_eta[:,l] /= N_veins_items
-    if lambda_items==0:
+    if lambda_items==0 and items_no_observed!=[]:
         new_eta[items_no_observed] = means
     return new_eta
 
