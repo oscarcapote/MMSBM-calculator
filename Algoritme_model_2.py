@@ -668,15 +668,16 @@ def p_kl_comp_arrays(omega,p_kl,eta,theta,K,L,links_array,links_ratings):
 @jit(cache=True,nopython=True)
 def q_ka_comp_arrays(omega,q_ka,K,links_array,att_elements):
     q_ka2 = np.zeros((K,len(att_elements)))
-    s = np.zeros(K)
+
     for link  in range(len(links_array)):
         i = links_array[link][0]
         a = links_array[link][1]
         for k in range(K):
-            q_ka2[k,a] += omega[i,a,k]#/(att_elements[a]+1.0e-16)
-            s[k] += omega[i,a,k]
-    q_ka2 /= np.expand_dims(s,axis=1)+1.0e-16
-    #q_ka2 /= s[:,np.newaxis]
+            #print(i,k,a)
+            q_ka2[k,a] = omega[i,a,k]#/att_elements[a]
+
+    suma = np.expand_dims(np.sum(q_ka2,axis =1),axis=1)
+    q_ka2  /=suma
     return q_ka2
 
 
@@ -950,6 +951,7 @@ tik_simu = time()
 #theta,eta,p_kl,omega,q_ka_ages,omega_ages,q_ka_genders,omega_genders,zeta,q_l_tau,omega_genres = inicialitzacio(K,L,Tau,N_nodes,N_items,N_ratings,N_ages,N_genres,N_genders,links_array,links_ratings,genre_link_array,age_link_array,gender_link_array,link_genre)
 #eta,theta,p_kl,q_l_taus,zetes,q_kas,omega,omega_items,omega_nodes = load_matrix_simu('input_matrix',K,L,N_ratings,items_meta_data,Taus,node_meta_data,N_att_meta_items)
 file_logLike = open(simu_dir+'/log_evolution.dat'.format(N_run),'w')
+file_logLike.write("iteration\tlog_likelihood\tlog_prior_nodes\tlog_prior_items\tlog_posterior\tposterior_variation\n")
 old_log_like = 0.0
 old_log_like += log_like_comp_arrays(p_kl,eta,theta,K,L,links_array,links_ratings)
 
@@ -1015,15 +1017,20 @@ for itt in range(N_itt):
     #theta_temp = theta.copy()
     eta_temp = eta.copy()
     if itt%N_measure==0:
-        log_like = 0.0
-        log_like += log_like_comp_arrays(p_kl,eta,theta,K,L,links_array,links_ratings)
+        log_post = 0.0
+        log_prior_nodes = 0.0
+        log_prior_items = 0.0
+        log_like = log_like_comp_arrays(p_kl,eta,theta,K,L,links_array,links_ratings)
+        log_post += log_like
         for meta in range(len(node_meta_data)):
-            log_like += lambda_nodes*log_like_comp_arrays_exclusive(theta,q_kas[meta],K,metas_links_arrays_nodes[meta])
+            log_prior_nodes += log_like_comp_arrays_exclusive(theta,q_kas[meta],K,metas_links_arrays_nodes[meta])
+        log_post += lambda_nodes*log_prior_nodes
         for meta in range(len(items_meta_data)):
-            log_like += lambda_items*log_like_comp_arrays(q_l_taus[meta],zetes[meta],eta,L,Taus[meta],metas_links_arrays_items[meta],metas_links_arrays_items_type[meta])
-        variation = old_log_like-log_like
+            log_prior_items += log_like_comp_arrays(q_l_taus[meta],zetes[meta],eta,L,Taus[meta],metas_links_arrays_items[meta],metas_links_arrays_items_type[meta])
+        log_post += lambda_items*log_prior_items
+        variation = old_log_like-log_post
 
-        file_logLike.write('{}\t{}\t{}\n'.format(itt,log_like,variation))
+        file_logLike.write('{}\t{}\t{}\t{}\t{}\t{}\n'.format(itt,log_like,log_prior_nodes,log_prior_items,log_post,variation))
 
         #else:
         if finished(theta,theta_old,K*N_nodes,0.0001):
