@@ -3,7 +3,6 @@
 Program that uses the Mix-Membership Stochastick Block Model using metadata as prior.
 
 # Language
-- Python >= 2.7
 - Python >= 3.5
 
 # Requirements
