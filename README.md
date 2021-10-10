@@ -1,4 +1,4 @@
-# MMSBM_wPriors
+# Multipartite_MMSBM
 
 Program that uses the Mix-Membership Stochastick Block Model using metadata as prior.
 
