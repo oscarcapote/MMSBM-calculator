@@ -57,17 +57,17 @@ simulation:
     N_measure: !!int 1
 ```
 ## `folder`
-Directory where your data that you want to analyze is stored.
+Directory where your dataset that you want to analyze is stored.
 
 ## `links`
-Section where you have to put information of the input filenames:
+Section where you have to put information about the file that contains the links:
 - `test`: Filename of the test set file
 - `base`: Filename of the base set file
 - `separator_test` and `separator_base`: Separators of the test and base files (default `\t`)
 - `rating_header`: Header of the rating column
-If your filenames have a number referring to the fold, you can write `{F}` and the program will change it automatically for the fold number.
+If your filenames have a number referring to the fold, you can write `{F}` and the program will substitute it automatically for the fold number.
 ## `nodes`
-Section where you put the information of your nodes
+Section where you put the information of your nodes metadata file
 - `nodes_header`: Header of the nodes identification column
 - `K`: Numbers of nodes groups
 - `file`:Filename with nodes metadata's information
@@ -76,7 +76,7 @@ Section where you put the information of your nodes
 - `lambda_items`: Intensity of nodes's priors
 
 ## `items`
-Section where you put the information of your items
+Section where you put the information of your items metadata file
 - `items_header`: Header of the items identification column
 - `L`: Numbers of items groups
 - `file`:Filename with items metadata's information
@@ -86,12 +86,44 @@ Section where you put the information of your items
 - `Taus`: Vector with the numbers of groups of items'
 
 ## `seed`
-Integer with the seed that the algorithm will initialize the membership and probabilities matrix
+Integer with the seed that the algorithm will initialize the membership and probabilities matrices
 
 ## `simulation`
 Information about the simulation procedure
 - `N_itt` Number of iterationts
 - `N_measure` Number of iterations of separation between convergence checking
 
+# Files structure
+To use the program you need, at less, the file that contains the links of the bipartite network that you want to infer. If you want to add metadata to the nodes or the items you need one file for each containing the information of each node/item. All files must be writed in columns. By default, the program reads the files using a tabulator (`\t`) as a separator. If you use another separator you can change it in the `config.yaml` file as detailed above. The information about nodes, items and metadata must be integers that starts from 0 and increase sequentially. Here an example of a file that contains links:
+
+```
+node_id item_id label_id
+0   2   0
+0   6   2
+0   8   1
+1   3   0
+1   2   1
+...
+
+```
+Note that the first row contains the headers that you can indicate in the `config.yaml`.
+
+And here we have an example of metadata file.
+```
+item_id genre_id
+0       2
+1       2
+2       3
+3       0
+4       4
+5       0
+6       0
+7       0
+8       1
+9       4
+10      4
+11      1
+
+```
 # Use
 To run the program you have to go to the directory where the `config.yaml` is and run the code.
