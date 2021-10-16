@@ -1,7 +1,6 @@
 # Multipartite_MMSBM
 
-Program that uses the Mix-Membership Stochastick Block Model using metadata as prior.
-
+Program to find the membership factors and the probabilities of connections in a bipartite network adding metadata to the nodes. This program finds the most plausible parameters of the Mixed-Membership Stochastick Block Model, that fits a dataset of links between nodes. Also the user can add nodes' metadata that can help (or not) to the link prediction.
 # Language
 - Python >= 3.5
 
