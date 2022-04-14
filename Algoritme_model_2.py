@@ -28,12 +28,12 @@ parser.add_argument("-L",help="Number of items groups",type=int)
 parser.add_argument("--lambda_nodes",help="Intensity of nodes priors",type=float)
 parser.add_argument("--lambda_items",help="Intensity of items priors",type=float)
 
-parser.add_argument("-s","--seed",help="Seed to generate the random matrices",type=int)
+parser.add_argument("-s","--seed",help="Optiona, seed to generate the random matrices",type=int)
 parser.add_argument("-F","--Fold",help="Number of the fold",type=int)
 parser.add_argument("-N","--N_itt",help="Maximum number of iterations",type=int)
 parser.add_argument("-n","--N_meas",help="Number of iterationts to check  the convergence",type=int)
-parser.add_argument("--N_simu",help="Optional, simulation number to label the simulation. It will substitute the seed to name the simulation.",type=int)
 parser.add_argument("-R","--Redo",help="Redo simulation if it was done before", action='store_true')
+parser.add_argument("--N_simu",help="Optional, simulation number to label the simulation. It will substitute the seed to name the simulation.",type=int)
 parser.add_argument("--dir_format",help="Directory format, addig information about the lambdes (lambdes) or the groups number (groups)",default="lambdes",choices=["lambdes","groups"],type=str)
 
 
