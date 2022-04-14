@@ -153,4 +153,11 @@ To run the program you have to go to the directory where the `config.yaml` is an
   if `--dir_format`=``groups``
 
 In this directory four different files will appear:
-- d
+- `info_simus.info` file that contains information about the run: date, number of links, ...
+- `log_evolution.dat` it contains the values of the log-likelihoods in each `N_meas` steps of the MAP algorithm.
+- `theta.dat` matrix with the membership factors of each user. Rows are users and columns are groups.
+- `eta.dat` matrix with the membership factors of each item. Rows are items and columns are groups.
+- `pkl_{r}.dat` matrix with the probabilities connections between groups with label _r_. The program will generate a file for each link label.
+- `qlT_{r}_{meta}.dat` matrix with the probabilities connections between groups of items and the attributes _meta_ label _r_. The program will generate a file for each attribute and for each label. Labels can be 0 (connected) and 1 (not connected).
+- `zeta_{meta}.dat` matrix with the membership factors of each item's attribute _meta_. Rows are attribute types and columns are groups. The program will generate a file for each attribute.
+- `q_ka_{meta}.dat` matrix with the membership factors of each user's attribute _meta_. Rows are attribute types and columns are groups. The program will generate a file for each attribute.
