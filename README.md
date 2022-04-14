@@ -107,7 +107,7 @@ node_id item_id label_id
 ```
 Note that the first row contains the headers that you can indicate in the `config.yaml`.
 
-And here we have an example of metadata file.
+And here we have an example of metadata file, in this case, we add to the _item_id_ the _genre_id_ metadata.
 ```
 item_id genre_id
 0       2
@@ -126,3 +126,31 @@ item_id genre_id
 ```
 # Use
 To run the program you have to go to the directory where the `config.yaml` is and run the code.
+
+`python3 Algoritme_model_2.py [OPTIONS]`
+
+## Description
+- `--help`,`-h` display this help and exit
+-  `-K` number of user's groups that the MMBSM algorithm will user
+- `-L`number of item's groups that the MMBSM algorithm will user
+- `--lambda_nodes` value of the user's metadata visibility
+- `--lambda_items` value of the item's metadata visibility
+- `--seed`, `-s` seed to generate the random matrices. It is optional and must be an integer.
+- `-N`, `--N_itt` number maximum of iterations that the maximization-expectation algorithm will perform.
+- ``-n``, ``--N_meas`` number of steps between each record of data of the likelihood evolution.
+- `--Redo`, `-R` If it is True, it redo simulation if it was done before, else, if the simulation was done before the program automatically exits.
+- `--N_simu` optional label to add to the directory where the output files will be stored. If ``None`` the seed will appear instead.
+- `--dir_format` directory format, adding information about the lambdes (``lambdes``) or the groups number (``groups``).
+- `-F`,``--Fold`` fold number that appears in the links' filename in case that a _k_-fold cross validation is being used.
+
+# Output
+
+ Once the MAP algorithm starts, a directory to store the outputs files is created. The folder will be created in the same directory where the program was executed and has the following structure.
+
+- `simu_ln_{lambda_nodes}_li_{lambda_items}/results_simu_s_{seed}_f_{Fold}`  
+  if `--dir_format`=`lambdes`
+- `simu_K_{K}_L_{L}/results_simu_s_{seed}_f_{Fold}`
+  if `--dir_format`=``groups``
+
+In this directory four different files will appear:
+- d
