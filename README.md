@@ -38,11 +38,11 @@ To adapt the algorithm to any situation where metadata is totally, partially or 
 ### Types of metadata
 This program predicts links in a multipartite complex network. There are two types of metadata exclusive where each node is assigned to one type of metadata like gender, age, nationality... The second type is the inclusive type where each node can have more than one type of metadata. One example is the genre of a movie or any type of piece of art.
 
-This program divides the two types of nodes as `nodes` and `items`. The `nodes` in this program can only have assigned exclusive metadata and `items` can only have assigned inclusive metadata.
+This program divides the two types of nodes as `users` and `items`. The `users` in this program can only have assigned exclusive metadata and `items` can only have assigned inclusive metadata.
 
 
 ### Values of _lambda_
-As we said before, our approach is designed to tune the importance of **each** metadata, but the program was designed to tune separately the _lambda_ of the `nodes`' metadatas with the same value (`lambda_nodes`) and the `items`' metadatas with the same value (`lambda_items`).
+As we said before, our approach is designed to tune the importance of **each** metadata, but the program was designed to tune separately the _lambda_ of the `users`' metadatas with the same value (`lambda_nodes`) and the `items`' metadatas with the same value (`lambda_items`).
 
 # Configuration
 When you want to perform an analysis, you have to create in the folder where the results will be stored a file named `config.yaml`. It has to be written in a yaml format with this structure:
@@ -100,7 +100,7 @@ Section where you have to put information about the file that contains the links
 - `rating_header`: Header of the rating column
 If your filenames have a number referring to the fold, you can write `{F}` and the program will substitute it automatically for the fold number.
 
-## `nodes`
+## `users`
 Section where you put the information of your nodes metadata file
 - `nodes_header`: Header of the nodes identification column
 - `K`: Numbers of nodes groups

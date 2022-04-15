@@ -28,8 +28,8 @@ parser.add_argument("-L",help="Number of items groups",type=int)
 parser.add_argument("--lambda_nodes",help="Intensity of nodes priors",type=float)
 parser.add_argument("--lambda_items",help="Intensity of items priors",type=float)
 
-parser.add_argument("-s","--seed",help="Optiona, seed to generate the random matrices",type=int)
 parser.add_argument("-F","--Fold",help="Number of the fold",type=int)
+parser.add_argument("-s","--seed",help="Optiona, seed to generate the random matrices",type=int)
 parser.add_argument("-N","--N_itt",help="Maximum number of iterations",type=int)
 parser.add_argument("-n","--N_meas",help="Number of iterationts to check  the convergence",type=int)
 parser.add_argument("-R","--Redo",help="Redo simulation if it was done before", action='store_true')
@@ -62,7 +62,7 @@ def use_default(default,non_default,arg):
         return default
 
 if args.K==None:
-    K = data['nodes']['K']
+    K = data['users']['K']
 else: K = args.K
 
 if args.L==None:
@@ -73,7 +73,7 @@ else: L = args.L
 
 if args.lambda_nodes==None:
     try:
-        lambda_nodes = data['nodes']['lambda_nodes']
+        lambda_nodes = data['users']['lambda_nodes']
     except: lambda_nodes = 0.0
 else: lambda_nodes = args.lambda_nodes
 
@@ -95,7 +95,7 @@ N_measure = choose_params(args.N_meas,data['simulation'],'N_measure')
 N_fold = choose_params(args.Fold,data,'N_fold')#data['N_fold']
 
 if lambda_nodes==0.0:node_meta_data = []
-else:node_meta_data =  data['nodes']['nodes_meta']
+else:node_meta_data =  data['users']['nodes_meta']
 
 if lambda_items==0.0:
     items_meta_data = []
@@ -112,8 +112,8 @@ N_meta_items = len(items_meta_data)
 
 print('file' not in data['items'])
 
-if 'file' in data['nodes']:
-    node_file_dir = data['folder']+'/'+data['nodes']['file']
+if 'file' in data['users']:
+    node_file_dir = data['folder']+'/'+data['users']['file']
 else:
     node_file_dir = ''
 if 'file' in data['items']:
@@ -126,11 +126,11 @@ else:
 links_base_file_dir = data['folder']+'/'+data['links']['base'].replace('{F}',str(N_fold))
 links_test_file_dir = data['folder']+'/'+data['links']['test'].replace('{F}',str(N_fold))
 
-node_header = data['nodes']['nodes_header']
+node_header = data['users']['nodes_header']
 item_header = data['items']['items_header']
 rating_header = data['links']['rating_header']
 
-node_separator = use_default('\t',data['nodes'],'separator')
+node_separator = use_default('\t',data['users'],'separator')
 item_separator =  use_default('\t',data['items'],'separator')
 link_separator_base =  use_default('\t',data['links'],'separator_base')
 link_separator_test =  use_default('\t',data['links'],'separator_test')
@@ -169,14 +169,14 @@ if not os.path.exists(direct):
 
 if sys.version_info[0] < 3:
     df_links = pd.read_csv(links_base_file_dir.format(N_fold),sep=link_separator_base.encode('utf-8'), engine='python')
-    if 'file' in data['nodes']:df_nodes = pd.read_csv(node_file_dir,sep=node_separator.encode('utf-8'), engine='python')#queryodf(nodes_query, engine="IMPALA", use_cache=False, block=True)
+    if 'file' in data['users']:df_nodes = pd.read_csv(node_file_dir,sep=node_separator.encode('utf-8'), engine='python')#queryodf(nodes_query, engine="IMPALA", use_cache=False, block=True)
     else:df_nodes = pd.DataFrame()#
     if 'file' in data['items']:df_items = pd.read_csv(item_file_dir,dtype={'node_id': np.int64, 'common':str},sep=item_separator.encode('utf-8'), engine='python')
     else:df_items = pd.DataFrame()#queryodf(items_query, engine="IMPALA", use_cache=False, block=True)
     links_test_df = pd.read_csv(links_test_file_dir.format(N_fold),sep=link_separator_test.encode('utf-8'), engine='python')
 else:
     df_links = pd.read_csv(links_base_file_dir.format(N_fold),sep=link_separator_base, engine='python')
-    if 'file' in data['nodes']:df_nodes = pd.read_csv(node_file_dir,sep=node_separator, engine='python')#queryodf(nodes_query, engine="IMPALA", use_cache=False, block=True)
+    if 'file' in data['users']:df_nodes = pd.read_csv(node_file_dir,sep=node_separator, engine='python')#queryodf(nodes_query, engine="IMPALA", use_cache=False, block=True)
     else:df_nodes = pd.DataFrame()
     print(df_nodes.head())
     print('-----',node_separator)
@@ -204,7 +204,7 @@ for meta in items_meta_data:
 
 # In[10]:
 
-if 'file' in data['nodes']: N_nodes = len(df_nodes)
+if 'file' in data['users']: N_nodes = len(df_nodes)
 else: N_nodes = max(df_links.max()[node_header],links_test_df.max()[node_header])+1
 
 
