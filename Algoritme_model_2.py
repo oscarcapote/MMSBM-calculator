@@ -1089,22 +1089,22 @@ for meta in range(len(items_meta_data)):
 for meta in range(len(node_meta_data)):
     np.savetxt(simu_dir+'/q_ka_{}.dat'.format(node_meta_data[meta]),q_kas[meta])
 
-total = open(simu_dir+'/total_p.dat'.format(N_run),'w')
-header ='i\tj'
-string_format = '{}\t{}\t'
-for r in range(N_ratings):
-    header+='\tp_rij={}'.format(r)
-    string_format += '{}\t'
-string_format=string_format[:-1]+'\n'
-total.write(header+'\n')
-items_index = np.array(range(N_items))
-n = 0
-for i,j in links_test:
-    t = tuple([i,j]+list(total_p[n,:]))
-    n+=1
-    total.write(string_format.format(*t))
-total.close()
-
+#total = open(simu_dir+'/total_p.dat'.format(N_run),'w')
+#header ='i\tj'
+#string_format = '{}\t{}\t'
+#for r in range(N_ratings):
+#    header+='\tp_rij={}'.format(r)
+#    string_format += '{}\t'
+#string_format=string_format[:-1]+'\n'
+#total.write(header+'\n')
+#items_index = np.array(range(N_items))
+#n = 0
+#for i,j in links_test:
+#    t = tuple([i,j]+list(total_p[n,:]))
+#    n+=1
+#    total.write(string_format.format(*t))
+#total.close()
+#
 #exit()
 myfile = open(simu_dir+'/info_simus_end.info','w')# as myfile:
 myfile.write("Simulation finished at:" + time_lib.strftime("%c")+'\n')
