@@ -159,7 +159,7 @@ item_id genre_id
 11      1
 
 ```
-# Use
+# Usage
 To run the program you have to go to the directory where the `config.yaml` is and run the code.
 
 `python3 Algoritme_model_2.py [OPTIONS]`
@@ -178,7 +178,9 @@ To run the program you have to go to the directory where the `config.yaml` is an
 - `--dir_format` directory format, adding information about the lambdes (``lambdes``) or the groups number (``groups``).
 - `-F`,``--Fold`` fold number that appears in the links' filename in case that a _k_-fold cross validation is being used.
 
-# Output
+**_NOTE_**: There are some parameters that can be initialized in the `config.yaml` and the console parameters like `K`. If a parameter is initialized in both places, the console parameters will have priority.
+
+# Outputs
 
  Once the MAP algorithm starts, a directory to store the outputs files is created. The folder will be created in the same directory where the program was executed and has the following structure.
 
