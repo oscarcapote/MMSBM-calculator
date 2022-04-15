@@ -1,6 +1,6 @@
 # Multipartite_MMSBM
 
-Program to find the membership factors and the probabilities of connections in a bipartite network adding metadata to the nodes. This program finds the most plausible parameters of the Mixed-Membership Stochastick Block Model, that fits a dataset of links between nodes. Also the user can add nodes' metadata that can help (or not) to the link prediction.
+Program to find the membership factors and the probabilities of connections in a bipartite network adding metadata to the nodes. This program finds the most plausible parameters of the Mixed-Membership Stochastic Block Model (MMSBM), that fits a dataset of links between nodes. Also you can add users' metadata that can help (or not) to the link prediction.
 # Language
 - Python >= 3.5
 
@@ -9,6 +9,40 @@ Program to find the membership factors and the probabilities of connections in a
 - numpy
 - numba
 - PyYaml
+
+# The link prediction problem and how we solve it
+
+The problem that solves this program is the link prediction in a bipartite complex network where you have two types of nodes that can be users and items, politicians and bills... and labeled links that represents ratings, votes, preferences or simple connections.
+
+The model that we use is Mixed-Membership Stochastic Block Model that supposes that nodes belongs to a superposition of groups and the probability of connection depends only of the groups that they belong (read [this][dc131834]).
+
+  [dc131834]: https://www.pnas.org/doi/abs/10.1073/pnas.1606316113 "Accurate and scalable social recommendation using mixed-membership stochastic block models"
+
+![bipartite](images/2022/04/bipartite.png)
+
+To get these model parameters we use an Bayesian inference approach to get the most plausible parameters, using the Maximum a Posteriori (MAP) algorithm.
+
+Besides the known links, we can use the node attributes or metadata to improve or not the predictions. This improvement depends on the correlation of the metadata and the links.
+
+![multipartite](images/2022/04/multipartite.png)
+
+In this case we extend our problem to a link prediction problem in a multipartite complex network where we have to take into account the metadata bipartites networks. Each metadata bipartite network is described using a MMSBM (read [this][f918b40b]).
+
+  [f918b40b]: https://journals.aps.org/prx/pdf/10.1103/PhysRevX.12.011010 "Node Metadata Can Produce Predictability Crossovers in Network Inference Problems"
+
+To adapt the algorithm to any situation where metadata is totally, partially or no correlated, our approach incorporates an hyperparameter _lambda_ to each metadata that informs about the importance of the metadata when are used.
+![lambdes](images/2022/04/lambdes.png)
+
+## Program limitations
+
+### Types of metadata
+This program predicts links in a multipartite complex network. There are two types of metadata exclusive where each node is assigned to one type of metadata like gender, age, nationality... The second type is the inclusive type where each node can have more than one type of metadata. One example is the genre of a movie or any type of piece of art.
+
+This program divides the two types of nodes as `nodes` and `items`. The `nodes` in this program can only have assigned exclusive metadata and `items` can only have assigned inclusive metadata.
+
+
+### Values of _lambda_
+As we said before, our approach is designed to tune the importance of **each** metadata, but the program was designed to tune separately the _lambda_ of the `nodes`' metadatas with the same value (`lambda_nodes`) and the `items`' metadatas with the same value (`lambda_items`).
 
 # Configuration
 When you want to perform an analysis, you have to create in the folder where the results will be stored a file named `config.yaml`. It has to be written in a yaml format with this structure:
@@ -65,11 +99,12 @@ Section where you have to put information about the file that contains the links
 - `separator_test` and `separator_base`: Separators of the test and base files (default `\t`)
 - `rating_header`: Header of the rating column
 If your filenames have a number referring to the fold, you can write `{F}` and the program will substitute it automatically for the fold number.
+
 ## `nodes`
 Section where you put the information of your nodes metadata file
 - `nodes_header`: Header of the nodes identification column
 - `K`: Numbers of nodes groups
-- `file`:Filename with nodes metadata's information
+- `file`: Filename with nodes metadata's information
 - `nodes_meta`: Vector with the name of all the  nodes' metadata headers'
 - `separator`: Separators of the nodes' file (default `\t`)
 - `lambda_items`: Intensity of nodes's priors
