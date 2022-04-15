@@ -53,8 +53,8 @@ folder: !!str Folder_directory
 #Put {F} instead of the fold number
 links:
     test: !!str formated_u{F}.test
-    base: !!str formated_u{F}.base
-    separator_base: !!str §
+    training: !!str formated_u{F}.base
+    separator_training: !!str \t
     separator_test: !!str \t
     rating_header: !!str rating
 
@@ -95,8 +95,8 @@ Directory where your dataset that you want to analyze is stored.
 ## `links`
 Section where you have to put information about the file that contains the links:
 - `test`: Filename of the test set file
-- `base`: Filename of the base set file
-- `separator_test` and `separator_base`: Separators of the test and base files (default `\t`)
+- `training`: Filename of the training set file
+- `separator_test` and `separator_training`: Separators of the test and training files (default `\t`)
 - `rating_header`: Header of the rating column
 If your filenames have a number referring to the fold, you can write `{F}` and the program will substitute it automatically for the fold number.
 

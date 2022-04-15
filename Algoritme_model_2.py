@@ -123,7 +123,7 @@ else:
 
 
 
-links_base_file_dir = data['folder']+'/'+data['links']['base'].replace('{F}',str(N_fold))
+links_base_file_dir = data['folder']+'/'+data['links']['training'].replace('{F}',str(N_fold))
 links_test_file_dir = data['folder']+'/'+data['links']['test'].replace('{F}',str(N_fold))
 
 node_header = data['users']['nodes_header']
@@ -132,7 +132,7 @@ rating_header = data['links']['rating_header']
 
 node_separator = use_default('\t',data['users'],'separator')
 item_separator =  use_default('\t',data['items'],'separator')
-link_separator_base =  use_default('\t',data['links'],'separator_base')
+link_separator_base =  use_default('\t',data['links'],'separator_training')
 link_separator_test =  use_default('\t',data['links'],'separator_test')
 print('separators',link_separator_base,link_separator_test,node_separator,item_separator)
 # In[7]:
