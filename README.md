@@ -131,7 +131,7 @@ Information about the simulation procedure
 To use the program you need, at less, the file that contains the links of the bipartite network that you want to infer. If you want to add metadata to the nodes or the items you need one file for each containing the information of each node/item. All files must be writed in columns. By default, the program reads the files using a tabulator (`\t`) as a separator. If you use another separator you can change it in the `config.yaml` file as detailed above. The information about nodes, items and metadata must be integers that starts from 0 and increase sequentially. Here an example of a file that contains links:
 
 ```
-node_id item_id label_id
+users_id item_id label_id
 0   2   0
 0   6   2
 0   8   1
@@ -145,24 +145,25 @@ Note that the first row contains the headers that you can indicate in the `confi
 And here we have an example of metadata file, in this case, we add to the _item_id_ the _genre_id_ metadata.
 ```
 item_id genre_id
-0       2
-1       2
-2       3
+0       2|0|4
+1       0|1|2|4
+2       0|3|4
 3       0
 4       4
-5       0
+5       0|2
 6       0
-7       0
+7       0|1|4
 8       1
 9       4
-10      4
+10      1|2|4
 11      1
 
 ```
+Observe that the metadata _genre_id_ is inclusive, for that reason another separator is used to separate the types of genres that belongs each item. This separator **must to to be** `|`.
 # Usage
 To run the program you have to go to the directory where the `config.yaml` is and run the code.
 
-`python3 Algoritme_model_2.py [OPTIONS]`
+```python3 Algoritme_model_2.py [OPTIONS]```
 
 ## Description
 - `--help`,`-h` display this help and exit
