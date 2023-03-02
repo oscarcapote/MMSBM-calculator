@@ -1,4 +1,4 @@
-# Multipartite_MMSBM
+# MMSBM-calculator
 
 Program to find the membership factors and the probabilities of connections in a bipartite network adding metadata to the nodes. This program finds the most plausible parameters of the Mixed-Membership Stochastic Block Model (MMSBM), that fits a dataset of links between nodes. Also you can add users' metadata that can help (or not) to the link prediction.
 # Language
